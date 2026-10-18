@@ -53,3 +53,4 @@ Next: finish the public website (separate repo `public-website`). Earlier plan w
 - Never commit secrets or `.env`. Never paste keys into chat or files. If a key was exposed, tell the owner to rotate it.
 - Prefer small, tested changes; add tests with each feature; keep the smoke test passing.
 - Do not deploy or touch the hosted database from here; schema changes belong in `crm-backend` as new forward migrations.
+- The CRM must never be indexed: `index.html` robots meta, `public/_headers` (`X-Robots-Tag: noindex...` on every response, Cloudflare Pages), `public/robots.txt` (crawling allowed so crawlers can see the noindex). Guarded by `src/lib/noindex.test.ts`. Only the public website is indexed.

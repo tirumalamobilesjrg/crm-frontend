@@ -1,0 +1,5 @@
+# The staff CRM must never appear in search results. De-indexing is done by the X-Robots-Tag header (public/_headers)
+# and the robots meta tag in index.html. Crawling is left allowed on purpose: a crawler that is blocked here could not
+# see those noindex signals, and a blocked URL can still be listed if something links to it.
+User-agent: *
+Disallow:
