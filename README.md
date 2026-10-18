@@ -29,10 +29,11 @@ user interface; hiding a button here is only convenience, never the security bou
 | Expenses (record, edit; delete is Admin only) | yes | yes |
 | Reports: sales, products, profit estimate, stock value, CSV downloads | yes | yes |
 | Audit log | **yes** | no access |
+| Product specifications and photos (upload, main photo, order, delete) | yes | yes |
 | Settings → Discount policy (Admin and Manager limits; "never reviewed" flag) | **edit** | no access |
 | Settings → Staff (list, add profile, change role, deactivate) | **yes** | no access |
 
-Not built yet: returns, product specifications and images editing. See `docs/STATUS.md`.
+Not built yet: returns. See `docs/STATUS.md`.
 
 ## Run it
 
@@ -59,7 +60,7 @@ Sign in with the Admin account created in Supabase (Authentication → Users) th
 | `npm run build` | typecheck + production build into `dist/` |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm test` | unit and component tests (Vitest + Testing Library) |
-| `npm run smoke` | (119 checks) builds against a **stand-in** Supabase (`e2e/mock-supabase.mjs`) and drives the app in a real browser (needs `npx playwright-core install chromium` once, or `CHROME_PATH`) |
+| `npm run smoke` | (136 checks) builds against a **stand-in** Supabase (`e2e/mock-supabase.mjs`) and drives the app in a real browser (needs `npx playwright-core install chromium` once, or `CHROME_PATH`) |
 
 ## How it is organised
 

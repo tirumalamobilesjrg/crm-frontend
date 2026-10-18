@@ -6,6 +6,7 @@ import { readyState, renderApp } from '../../test/utils'
 import * as api from '../../api/catalogue'
 
 vi.mock('../../api/catalogue')
+vi.mock('../../api/productMedia')
 
 function show(routeState?: unknown) {
   return renderApp(

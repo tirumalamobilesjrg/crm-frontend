@@ -368,3 +368,22 @@ export interface AuditEntry {
   record_id: string | null
   detail: Record<string, unknown> | null
 }
+
+export interface ProductSpec {
+  id: string
+  product_id: string
+  group_name: string
+  spec_key: string
+  spec_value: string
+  sort_order: number
+}
+
+export interface ProductImage {
+  id: string
+  product_id: string
+  storage_path: string
+  alt_text: string
+  sort_order: number
+  is_primary: boolean
+  created_at: string
+}

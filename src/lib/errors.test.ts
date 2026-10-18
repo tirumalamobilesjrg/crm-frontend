@@ -57,6 +57,15 @@ describe('toAppError', () => {
       expect(e.message).toBe('This supplier already has a purchase with that invoice number.')
       expectSafe(e.message)
     })
+    it('names a duplicate product specification', () => {
+      const e = toAppError({ code: '23505', message: 'duplicate key value violates unique constraint "product_specifications_product_id_group_name_spec_key_key"', details: 'Key (product_id, group_name, spec_key)=(1, Display, Screen size) already exists.' })
+      expect(e.message).toMatch(/already has a specification with that name/)
+      expect(e.message).not.toMatch(/product_id|Display/)
+    })
+    it('tells apart a missing parent (insert) from a row still in use (delete) for foreign keys', () => {
+      expect(toAppError({ code: '23503', message: 'insert or update on table "product_images" violates foreign key constraint "x"' }).message).toMatch(/no longer exists/)
+      expect(toAppError({ code: '23503', message: 'update or delete on table "customers" violates foreign key constraint "y" on table "invoices"' }).message).toMatch(/still in use/)
+    })
     it('names a duplicate customer phone number', () => {
       const e = toAppError({ code: '23505', message: 'duplicate key value violates unique constraint "customers_phone_key"', details: 'Key (phone)=(9876543210) already exists.' })
       expect(e.message).toBe('A customer with this phone number already exists. Search for them instead.')
@@ -147,6 +156,22 @@ describe('toAppError', () => {
     expect(toAppError({ code: 'TM006' }).message).toMatch(/payment/i)
     expect(toAppError({ code: 'TM011' }).message).toMatch(/last active Admin/)
     expect(toAppError({ code: 'TM002' }).message).toMatch(/different details/)
+  })
+
+  describe('photo storage', () => {
+    const storage = (message: string) => toAppError({ name: 'StorageApiError', message, status: 400, statusCode: '400' }).message
+    it('explains the size and type limits in plain words', () => {
+      expect(storage('The object exceeded the maximum allowed size')).toMatch(/too big.*2 MB/)
+      expect(storage('mime type image/gif is not supported')).toBe('Use a JPEG, PNG or WebP photo.')
+    })
+    it('maps permission and duplicate failures, and a missing bucket', () => {
+      expect(storage('new row violates row-level security policy')).toMatch(/permission/i)
+      expect(storage('The resource already exists')).toMatch(/already exists/)
+      expect(storage('Bucket not found')).toMatch(/not set up/)
+    })
+    it('never shows an unknown storage message', () => {
+      expect(storage('InternalError: connect ECONNREFUSED 10.0.0.5:5432')).toBe(GENERIC_MESSAGE)
+    })
   })
 
   describe('auth and network', () => {

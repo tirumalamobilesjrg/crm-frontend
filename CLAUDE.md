@@ -29,12 +29,13 @@ Sibling repos: `crm-backend` (schema, RLS, transactional functions — the sourc
 ## State
 Done (milestone 1): login/roles shell, dashboard counts, brands/categories, products + variants + publishing, Admin settings (discount policy, staff).
 Done (milestone 2, branch `feature/purchasing`): suppliers, draft purchases + lines, receiving via `receive_purchase` (one IMEI/serial box per phone, Enter = next, bad/duplicate flagged; accessories by quantity), "Add variant" opens after creating a product. Only IMEI 1 or serial is captured (no IMEI 2/condition/shelf yet).
-Verified: unit/component tests, browser smoke vs a stand-in server (119 checks, incl. purchasing, inventory, POS and back office), purchasing, inventory and POS data layer + RPCs against a LOCAL Supabase stack, and a manual login + catalogue pass against the real project.
+Verified: unit/component tests, browser smoke vs a stand-in server (136 checks, incl. purchasing, inventory, POS, back office and product media), purchasing, inventory and POS data layer + RPCs against a LOCAL Supabase stack, and a manual login + catalogue pass against the real project.
 Not verified: the purchasing screens in a real browser against real Supabase (API and RPC behaviour was verified against a local stack; the browser smoke uses the stand-in), anything on the hosted project. `src/lib/types.ts` is hand-written (replace with `supabase gen types`).
 Done (milestone 3, branch `feature/inventory`): Inventory overview/search, device and accessory detail, stock adjustments (`adjust_stock`, `adjust_quantity_stock`), IMEI correction. Contract: `docs/INVENTORY_API.md`.
 Done (milestone 4, branch `feature/pos`): POS (scan/cart/discount/approval/single payment via `finalize_sale`), sales list, invoice with A4 print, Admin discount approvals. Contract: `docs/POS_API.md`.
 Done (milestone 5, branch `feature/back-office`): customers (list, detail, edit, history, Admin delete), expenses, reports with CSV, Admin audit log. Contract: `docs/BACKOFFICE.md`.
-Next: UI/UX overhaul of the CRM, product specs/images (needs backend Storage policies), then the public website. Earlier plan was: POS billing
+Done (milestone 6, branch `feature/product-media`): product specifications and photos editor (needs backend migration 0021). Contract: `docs/PRODUCT_MEDIA.md`.
+Next: UI/UX overhaul of the CRM, then the public website. Earlier plan was: POS billing
 (cart, discounts with reason/approval, single payment, invoice view, A4 print), then customers/expenses/reports.
 
 ## Gotchas

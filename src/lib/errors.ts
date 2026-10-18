@@ -15,6 +15,7 @@ export class AppError extends Error {
 }
 
 interface ErrorLike {
+  name?: unknown
   message?: unknown
   code?: unknown
   details?: unknown
@@ -51,6 +52,8 @@ const identifierTaken = (what: string) => (value: string | undefined) =>
   value ? `${what} ${value} is already recorded on another device.` : `That ${what.toLowerCase()} is already recorded on another device.`
 
 const UNIQUE_BY_CONSTRAINT: Record<string, (value: string | undefined) => string> = {
+  product_specifications_product_id_group_name_spec_key_key: () => 'This product already has a specification with that name in that group. Edit the existing one instead.',
+  product_images_storage_path_key: () => 'That photo is already registered.',
   customers_phone_key: () => 'A customer with this phone number already exists. Search for them instead.',
   suppliers_name_key: () => 'A supplier with this name already exists.',
   purchases_supplier_invoice_key: () => 'This supplier already has a purchase with that invoice number.',
@@ -109,6 +112,12 @@ function uniqueMessage(message: string | undefined, details: string | undefined)
   return 'That value already exists.'
 }
 
+/** 23503 on an INSERT/UPDATE means the thing referred to is gone; on a DELETE it means something still refers to this row. */
+function foreignKeyMessage(message: string | undefined): string {
+  if (/^insert or update on table/i.test(message ?? '')) return 'That refers to something that no longer exists. Refresh the page and try again.'
+  return BY_CODE['23503'] as string
+}
+
 function purchaseStateMessage(message: string | undefined): string {
   const m = (message ?? '').toLowerCase()
   if (m.includes('already received')) return 'This purchase has already been received, so it cannot be changed.'
@@ -127,6 +136,17 @@ function discountMessage(message: string | undefined): string {
   if (m.includes('approver is not')) return 'The approver is no longer allowed to approve this discount.'
   if (m.includes('different user')) return 'An approval must be granted to a different person.'
   return BY_CODE.TM005 as string
+}
+
+/** Supabase Storage errors (StorageApiError) carry plain-English messages; only known ones are shown, in the shop's words. */
+function storageMessage(message: string | undefined): string {
+  const m = (message ?? '').toLowerCase()
+  if (m.includes('exceeded the maximum allowed size') || m.includes('too large')) return 'That photo is too big. The limit is 2 MB; shrink it or save it at a lower quality.'
+  if (m.includes('mime type') && m.includes('not supported')) return 'Use a JPEG, PNG or WebP photo.'
+  if (m.includes('row-level security') || m.includes('unauthorized') || m.includes('not allowed')) return BY_CODE['42501'] as string
+  if (m.includes('already exists') || m.includes('duplicate')) return 'A file with that name already exists. Please try again.'
+  if (m.includes('bucket not found')) return 'Photo storage is not set up on this project yet. Ask the owner to apply the latest backend migration.'
+  return GENERIC_MESSAGE
 }
 
 function invalidRequestMessage(message: string | undefined): string {
@@ -158,10 +178,12 @@ export function toAppError(err: unknown): AppError {
   if (code === '23514') {
     return new AppError(CHECK_BY_CONSTRAINT[constraintName(message) ?? ''] ?? 'A value is not allowed. Check what you entered and try again.', code)
   }
+  if (code === '23503') return new AppError(foreignKeyMessage(message), code)
   if (code === 'TM007') return new AppError(purchaseStateMessage(message), code)
   if (code === 'TM005') return new AppError(discountMessage(message), code)
   if (code === 'TM003' || code === 'TM012') return new AppError(invalidRequestMessage(message), code)
   if (code && BY_CODE[code]) return new AppError(BY_CODE[code], code)
+  if (e.name === 'StorageApiError' || e.name === 'StorageUnknownError') return new AppError(storageMessage(message), 'storage')
   if (err instanceof TypeError) return new AppError('Cannot reach the server. Check your internet connection.', 'network')
   logUnhandled(err)
   return new AppError(GENERIC_MESSAGE, code)

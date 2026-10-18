@@ -107,3 +107,12 @@ Also fixed: stale caches between modules (a completed sale now refreshes the cus
 Inventory, the POS, reports and the customer list).
 
 Known gaps: no receipts (no Storage policies), no returns/refunds, accessory profit not reported, reports computed in the browser (20,000-row guard).
+
+## Product media milestone (branch `feature/product-media`)
+
+Specifications and photos editor on the product page (Admin and Manager): grouped specifications with add/edit/delete, photo upload (JPEG/PNG/WebP, 2 MB) with main photo, order, descriptions and delete.
+Needs backend migration 0021 (public `product-images` bucket, staff-only writes). Details, rules and gaps: `docs/PRODUCT_MEDIA.md`.
+
+Checks: lint, typecheck, unit/component/API tests, build, audit, and a 136-check browser smoke against the stand-in server. The media api was also run for real against a local Supabase stack with the Storage service
+(uploads, public URL, primary/order, rollback, delete, specifications). The browser screens have NOT been run against real Supabase.
+Hosted project: migrations 0020 and 0021 are NOT applied there yet; until 0021 is applied, uploads fail with "Photo storage is not set up on this project yet".

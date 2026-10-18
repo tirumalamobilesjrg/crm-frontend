@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto'
 import { handleInventory, onReceive, forceStatus, PHONE_VARIANT, CASE_VARIANT } from './mock-inventory.mjs'
 import { handleSales, setFailNext, finalizeLog } from './mock-sales.mjs'
 import { handleBackOffice } from './mock-backoffice.mjs'
+import { handleMedia, handleMediaPublic } from './mock-media.mjs'
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const jwt = (sub) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`
 const USERS = {
@@ -52,9 +53,11 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', '*')
   res.setHeader('Access-Control-Expose-Headers', 'Content-Range')
   if (req.method === 'OPTIONS') return res.writeHead(204).end()
-  let body = ''
-  req.on('data', (c) => (body += c))
+  const chunks = []
+  req.on('data', (c) => chunks.push(c))
   req.on('end', () => {
+    const raw = Buffer.concat(chunks) // uploads are binary: keep the bytes, and a text view for JSON bodies
+    const body = raw.toString('utf8')
     log.push(`${req.method} ${url.pathname}${url.search}`)
     const json = (code, o, h = {}) => { res.writeHead(code, { 'Content-Type': 'application/json', ...h }); res.end(JSON.stringify(o)) }
     const send = (arr, wantsObject, code = 200) => {
@@ -84,16 +87,18 @@ const server = http.createServer((req, res) => {
       const sub = JSON.parse(Buffer.from((req.headers.authorization ?? '').split('.')[1] ?? 'e30', 'base64url').toString() || '{}').sub
       const u = byId(sub); return u ? json(200, { id: u.id, aud: 'authenticated', role: 'authenticated', email: 'x' }) : json(401, { msg: 'bad' })
     }
+    if (handleMediaPublic({ url, res })) return // public photos need no login
     const table = url.pathname.replace('/rest/v1/', '')
     const wantsObject = (req.headers.accept ?? '').includes('vnd.pgrst.object')
     const returnsRows = (req.headers.prefer ?? '').includes('return=representation')
     const sub = (() => { try { return JSON.parse(Buffer.from((req.headers.authorization ?? '').split('.')[1], 'base64url').toString()).sub } catch { return null } })()
     const me = byId(sub)
     if (!me) return json(401, { code: '42501', message: 'permission denied' })
-    const payload = body ? JSON.parse(body) : null
+    const payload = body && (req.headers['content-type'] ?? '').includes('json') ? JSON.parse(body) : null
     if (handleInventory({ table, req, url, payload, json, res, wantsObject, returnsRows })) return
     if (handleBackOffice({ table, req, url, payload, json, res, wantsObject, returnsRows, me })) return
     if (handleSales({ table, req, url, payload, json, res, wantsObject, returnsRows, me })) return
+    if (handleMedia({ table, req, url, raw, payload, json, res, wantsObject, returnsRows, me })) return
     if (req.method === 'HEAD') return res.writeHead(200, { 'Content-Range': '0-0/5' }).end()
 
     if (table === 'staff_profiles') {
@@ -105,8 +110,13 @@ const server = http.createServer((req, res) => {
     if (table === 'discount_policies') return json(200, [
       { role: 'admin', can_discount: true, max_percent: 100, max_amount: null, can_approve: true, configured_at: null },
       { role: 'manager', can_discount: false, max_percent: 0, max_amount: null, can_approve: false, configured_at: null }])
-    if (table === 'products') return json(200, [
-      { id: 'p1', brand_id: 'b1', category_id: 'c1', name: 'Nova X1', slug: 'nova-x1', description: 'Test phone', is_published: true, published_at: '2026-01-01', updated_at: '2026-01-01', brand: { name: 'Nova' }, category: { name: 'Smartphones' } }])
+    if (table === 'products') {
+      const rows = [
+      { id: 'p1', brand_id: 'b1', category_id: 'c1', name: 'Nova X1', slug: 'nova-x1', description: 'Test phone', is_published: true, published_at: '2026-01-01', updated_at: '2026-01-01', brand: { name: 'Nova' }, category: { name: 'Smartphones' } }]
+      const id = url.searchParams.get('id')?.slice(3)
+      const hit = id ? rows.filter((r) => r.id === id) : rows
+      return wantsObject ? (hit.length === 1 ? json(200, hit[0]) : json(406, { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned', details: null, hint: null })) : json(200, hit)
+    }
 
     if (table === 'product_variants' && req.method === 'GET') return json(200, variants)
 

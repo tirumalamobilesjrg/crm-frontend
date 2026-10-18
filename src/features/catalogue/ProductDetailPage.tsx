@@ -7,6 +7,8 @@ import { formatINR } from '../../lib/money'
 import type { Variant } from '../../lib/types'
 import { Badge, Button, Dialog, ErrorBox, Field, Loading, useToast } from '../../components/ui'
 import { validateVariant, type VariantForm } from './validation'
+import { PhotosSection } from './PhotosSection'
+import { SpecsSection } from './SpecsSection'
 
 const EMPTY: VariantForm = { sku: '', color: '', ram: '', storage: '', mrp: '', selling: '', publicPrice: '', trackingMode: 'serialized' }
 
@@ -202,6 +204,8 @@ export function ProductDetailPage() {
           </table>
         )}
       </section>
+      <SpecsSection productId={id} />
+      <PhotosSection productId={id} />
       {editing && <VariantDialog productId={id} variant={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   )
