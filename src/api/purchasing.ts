@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Purchase, PurchaseLine, PurchaseRow, ReceiveResult, ReceiveUnit, Supplier, VariantOption } from '../lib/types'
-import { run } from './db'
+import { run, runChange } from './db'
 
 const SUPPLIER_COLUMNS = 'id, name, phone, email, address, notes, is_active'
 const PURCHASE_COLUMNS = 'id, supplier_id, supplier_invoice_no, invoice_date, status, total, notes, received_at, created_at'
@@ -19,7 +19,7 @@ export interface SupplierInput {
 
 export const createSupplier = (input: SupplierInput) => run<Supplier>(supabase.from('suppliers').insert(input).select(SUPPLIER_COLUMNS).single())
 
-export const setSupplierActive = (id: string, is_active: boolean) => run(supabase.from('suppliers').update({ is_active }).eq('id', id))
+export const setSupplierActive = (id: string, is_active: boolean) => runChange(supabase.from('suppliers').update({ is_active }).eq('id', id).select('id'))
 
 export const listPurchases = () =>
   run<PurchaseRow[]>(
@@ -39,7 +39,8 @@ export interface PurchaseInput {
 export const createPurchase = (input: PurchaseInput) => run<Purchase>(supabase.from('purchases').insert(input).select(PURCHASE_COLUMNS).single())
 
 /** Drafts only; the database refuses any other state change (receiving goes through receive_purchase). */
-export const cancelPurchase = (id: string) => run(supabase.from('purchases').update({ status: 'cancelled' }).eq('id', id))
+export const cancelPurchase = (id: string) =>
+  runChange(supabase.from('purchases').update({ status: 'cancelled' }).eq('id', id).select('id'))
 
 export const listPurchaseLines = (purchaseId: string) =>
   run<PurchaseLine[]>(supabase.from('purchase_items').select(LINE_COLUMNS).eq('purchase_id', purchaseId).order('created_at') as never)
@@ -52,7 +53,7 @@ export interface PurchaseLineInput {
 }
 
 export const addPurchaseLine = (input: PurchaseLineInput) => run(supabase.from('purchase_items').insert(input))
-export const removePurchaseLine = (id: string) => run(supabase.from('purchase_items').delete().eq('id', id))
+export const removePurchaseLine = (id: string) => runChange(supabase.from('purchase_items').delete().eq('id', id).select('id'))
 
 export const listVariantOptions = () =>
   run<VariantOption[]>(

@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process'
 const OUT = '.smoke-dist'
 const env = { ...process.env, VITE_SUPABASE_URL: 'http://127.0.0.1:54399', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_smoketest' }
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx'
-const run = (cmd, args, opts = {}) => spawn(cmd, args, { stdio: 'inherit', env, shell: process.platform === 'win32', ...opts })
+const run = (cmd, args, opts = {}) => spawn(cmd, args, { stdio: 'inherit', env, shell: cmd.endsWith('.cmd'), ...opts })
 const wait = (child) => new Promise((resolve) => child.on('exit', (code) => resolve(code ?? 1)))
 
 const build = await wait(run(npx, ['vite', 'build', '--outDir', OUT, '--emptyOutDir', '--logLevel', 'warn']))

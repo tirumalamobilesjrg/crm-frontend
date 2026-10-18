@@ -5,6 +5,8 @@ import userEvent from '@testing-library/user-event'
 import { PurchaseDetailPage } from './PurchaseDetailPage'
 import { readyState, renderApp } from '../../test/utils'
 import * as api from '../../api/purchasing'
+import { NO_ROWS_MESSAGE } from '../../api/db'
+import { AppError } from '../../lib/errors'
 import type { PurchaseLine, PurchaseRow } from '../../lib/types'
 
 vi.mock('../../api/purchasing')
@@ -81,7 +83,7 @@ describe('PurchaseDetailPage receiving', () => {
   })
 
   it('reuses the key when the same units are retried after a failure', async () => {
-    vi.mocked(api.receivePurchase).mockRejectedValueOnce(new Error('Cannot reach the server.')).mockResolvedValue(received)
+    vi.mocked(api.receivePurchase).mockRejectedValueOnce(new AppError('Cannot reach the server.', 'network')).mockResolvedValue(received)
     show()
     const user = userEvent.setup()
     await user.type(await screen.findByLabelText(/phone 1 of 2/), A)
@@ -95,7 +97,7 @@ describe('PurchaseDetailPage receiving', () => {
   })
 
   it('uses a new key when the units were changed between attempts', async () => {
-    vi.mocked(api.receivePurchase).mockRejectedValueOnce(new Error('Cannot reach the server.')).mockResolvedValue(received)
+    vi.mocked(api.receivePurchase).mockRejectedValueOnce(new AppError('Cannot reach the server.', 'network')).mockResolvedValue(received)
     show()
     const user = userEvent.setup()
     await user.type(await screen.findByLabelText(/phone 1 of 2/), A)
@@ -119,13 +121,13 @@ describe('PurchaseDetailPage receiving', () => {
   })
 
   it('shows the database error, for example a duplicate IMEI already in stock', async () => {
-    vi.mocked(api.receivePurchase).mockRejectedValue(new Error('A record with this imei1 ("490154203237518") already exists.'))
+    vi.mocked(api.receivePurchase).mockRejectedValue(new AppError('IMEI 490154203237518 is already recorded on another device.', '23505'))
     show()
     const user = userEvent.setup()
     await user.type(await screen.findByLabelText(/phone 1 of 2/), A)
     await user.type(screen.getByLabelText(/phone 2 of 2/), B)
     await user.click(screen.getByRole('button', { name: 'Receive stock' }))
-    expect(await screen.findByText(/already exists/)).toBeInTheDocument()
+    expect(await screen.findByText(/already recorded/)).toBeInTheDocument()
   })
 
   it('does not offer receiving once a purchase is received', async () => {
@@ -133,5 +135,30 @@ describe('PurchaseDetailPage receiving', () => {
     show()
     expect(await screen.findByText('Received', { selector: '.badge' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Receive stock' })).not.toBeInTheDocument()
+  })
+})
+
+describe('PurchaseDetailPage stale or finalised records', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.mocked(api.getPurchase).mockResolvedValue(purchase())
+    vi.mocked(api.listVariantOptions).mockResolvedValue([])
+    vi.mocked(api.listPurchaseLines).mockResolvedValue([line('l1', 'NX1', 2, 'serialized')])
+  })
+
+  it('shows an error, not success, when cancelling changes no rows (someone else already received it)', async () => {
+    vi.mocked(api.cancelPurchase).mockRejectedValue(new AppError(NO_ROWS_MESSAGE, 'no_rows'))
+    show()
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Cancel purchase' }))
+    expect(await screen.findByText(NO_ROWS_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByText('Purchase cancelled')).not.toBeInTheDocument()
+  })
+
+  it('shows an error when removing a line changes no rows', async () => {
+    vi.mocked(api.removePurchaseLine).mockRejectedValue(new AppError(NO_ROWS_MESSAGE, 'no_rows'))
+    show()
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Remove line NX1' }))
+    expect(await screen.findByText(NO_ROWS_MESSAGE)).toBeInTheDocument()
   })
 })

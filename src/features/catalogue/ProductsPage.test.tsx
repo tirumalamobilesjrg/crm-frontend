@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { ProductsPage } from './ProductsPage'
 import { readyState, renderApp } from '../../test/utils'
 import * as api from '../../api/catalogue'
+import { AppError } from '../../lib/errors'
 import type { ProductRow } from '../../lib/types'
 
 vi.mock('../../api/catalogue')
@@ -46,7 +47,7 @@ describe('ProductsPage', () => {
 
   it('shows the database error message when publishing is refused', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    vi.mocked(api.setPublished).mockRejectedValue(new Error('You do not have permission to do that.'))
+    vi.mocked(api.setPublished).mockRejectedValue(new AppError('You do not have permission to do that.', '42501'))
     renderApp(<ProductsPage />, { state: readyState('manager') })
     const rowEl = (await screen.findByText('Nova X1')).closest('tr')!
     await userEvent.setup().click(within(rowEl).getByRole('button', { name: 'Publish' }))

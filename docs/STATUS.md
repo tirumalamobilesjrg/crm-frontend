@@ -49,3 +49,25 @@ Not verified / known gaps:
 - Duplicates are detected within the delivery on screen; a clash with stock already in the database is reported by the server on receive.
 - Lines cannot be edited, only removed and re-added; purchases cannot be deleted, only cancelled.
 - Developer note: a global `legacy-peer-deps=true` npm setting skips `@testing-library/dom`; install with `npm ci --legacy-peer-deps=false`.
+
+## Purchasing reliability fixes (branch `fix/purchasing-reliability`)
+
+Found while running the purchasing flow against a local Supabase stack (migrations 0001-0020, disposable users, nothing hosted):
+- **Zero-row writes.** PostgREST reports an UPDATE/DELETE that row-level security filtered out (or that hit a finalised purchase) as success.
+  Every update/delete in `src/api/` now ends in `.select(<key>)` and goes through `runChange` (`src/api/db.ts`), which turns "0 rows changed"
+  into an explicit `no_rows` error with a message that does not claim a specific cause. Covers cancel purchase, remove line, supplier / brand / category /
+  product / variant changes, discount policy and staff updates.
+- **Error translation (`src/lib/errors.ts`).** Known constraints are mapped by constraint name (supplier name, supplier invoice number - including the
+  `lower(...)` index keys -, IMEI 1/2, serial, cross-column identifier, IMEI/serial check constraints). Purchase-state and unit-count errors have actionable
+  wording. Raw SQL, constraint text, row dumps and internal ids are never shown; unknown errors become a generic message and are logged with
+  `console.warn` in development builds only.
+- **Browser smoke test** now has 40 checks (17 original + 23 purchasing): suppliers (validation, duplicate), purchases (loading and empty states, validation,
+  lines and totals), receiving (empty boxes blocked, bad and duplicate IMEI flagged, Enter moves on, confirmation dialog, duplicate-in-stock error, same
+  idempotency key on retry, new key when units change, success), stale-page behaviour (removing a line of / cancelling a purchase finalised elsewhere),
+  and phone-width overflow on a purchase.
+
+Smoke-test accounts: the stand-in server (`e2e/mock-supabase.mjs`) has two fictional accounts that exist only inside that process. They are not
+credentials for anything. To exercise the **real** backend from a browser, use a **local** Supabase stack (`supabase start` in crm-backend), create
+disposable users with the local admin API and give them `staff_profiles` rows, keep their passwords out of the repo (generate at run time, never
+commit), and run `supabase db reset --local` afterwards. Never use hosted accounts or production data for tests.
+The smoke job in CI stays non-blocking (`continue-on-error`) until it has passed there reliably.

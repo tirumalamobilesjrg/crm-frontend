@@ -29,8 +29,8 @@ Sibling repos: `crm-backend` (schema, RLS, transactional functions — the sourc
 ## State
 Done (milestone 1): login/roles shell, dashboard counts, brands/categories, products + variants + publishing, Admin settings (discount policy, staff).
 Done (milestone 2, branch `feature/purchasing`): suppliers, draft purchases + lines, receiving via `receive_purchase` (one IMEI/serial box per phone, Enter = next, bad/duplicate flagged; accessories by quantity), "Add variant" opens after creating a product. Only IMEI 1 or serial is captured (no IMEI 2/condition/shelf yet).
-Verified: unit/component tests, browser smoke vs a stand-in server, and a manual login + catalogue pass against the real project.
-Not verified: mutations beyond that manual pass (purchasing screens never ran against the real project; `npm run smoke` was not extended for them), CI on GitHub. `src/lib/types.ts` is hand-written (replace with `supabase gen types`).
+Verified: unit/component tests (126), browser smoke vs a stand-in server (40 checks, incl. purchasing), purchasing flow against a LOCAL Supabase stack, and a manual login + catalogue pass against the real project.
+Not verified: the purchasing screens in a real browser against real Supabase (API and RPC behaviour was verified against a local stack; the browser smoke uses the stand-in), anything on the hosted project. `src/lib/types.ts` is hand-written (replace with `supabase gen types`).
 Next: inventory + adjustments + IMEI correction, then POS billing
 (cart, discounts with reason/approval, single payment, invoice view, A4 print), then customers/expenses/reports.
 
@@ -38,6 +38,9 @@ Next: inventory + adjustments + IMEI correction, then POS billing
 - A global `legacy-peer-deps=true` in `~/.npmrc` skips the `@testing-library/dom` peer and makes every test fail. Install with `npm ci --legacy-peer-deps=false`, and don't commit a `package-lock.json` regenerated that way.
 - A running `npm run dev` locks `node_modules` native files (rolldown) on Windows; stop it before `npm ci`.
 - The backend now rejects a sale unit price above the variant's MRP (`TM003`, migration 0020). The POS must validate against MRP too.
+- Updates/deletes must end in `.select(<key>)` and use `runChange` (`src/api/db.ts`): PostgREST reports zero rows changed as success.
+- Never show raw database text; add new constraint names to `src/lib/errors.ts` with a test.
+- On Windows run `npm run smoke` with `CHROME_PATH` set to an installed Chrome if Playwright's Chromium is not installed.
 
 ## Working agreements
 - Never commit secrets or `.env`. Never paste keys into chat or files. If a key was exposed, tell the owner to rotate it.

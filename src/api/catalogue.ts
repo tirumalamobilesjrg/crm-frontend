@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Brand, Category, Product, ProductRow, TrackingMode, Variant } from '../lib/types'
-import { run } from './db'
+import { run, runChange } from './db'
 
 const PRODUCT_COLUMNS =
   'id, brand_id, category_id, name, slug, description, is_published, published_at, updated_at, brand:brands(name), category:categories(name)'
@@ -14,9 +14,9 @@ export const listCategories = () =>
 export const createBrand = (input: { name: string; slug: string }) => run(supabase.from('brands').insert(input))
 export const createCategory = (input: { name: string; slug: string }) => run(supabase.from('categories').insert(input))
 export const setBrandActive = (id: string, is_active: boolean) =>
-  run(supabase.from('brands').update({ is_active }).eq('id', id))
+  runChange(supabase.from('brands').update({ is_active }).eq('id', id).select('id'))
 export const setCategoryActive = (id: string, is_active: boolean) =>
-  run(supabase.from('categories').update({ is_active }).eq('id', id))
+  runChange(supabase.from('categories').update({ is_active }).eq('id', id).select('id'))
 
 export const listProducts = () =>
   run<ProductRow[]>(supabase.from('products').select(PRODUCT_COLUMNS).order('name') as never)
@@ -36,11 +36,11 @@ export const createProduct = (input: ProductInput) =>
   run<Product>(supabase.from('products').insert(input).select().single())
 
 export const updateProduct = (id: string, patch: Partial<Omit<ProductInput, 'slug'>>) =>
-  run(supabase.from('products').update(patch).eq('id', id))
+  runChange(supabase.from('products').update(patch).eq('id', id).select('id'))
 
 // Publishing is allowed for Admin and Manager; the database enforces it as well.
 export const setPublished = (id: string, is_published: boolean) =>
-  run(supabase.from('products').update({ is_published }).eq('id', id))
+  runChange(supabase.from('products').update({ is_published }).eq('id', id).select('id'))
 
 export const listVariants = (productId: string) =>
   run<Variant[]>(supabase.from('product_variants').select(VARIANT_COLUMNS).eq('product_id', productId).order('sku'))
@@ -70,4 +70,4 @@ export interface VariantPatch {
 }
 
 export const updateVariant = (id: string, patch: VariantPatch) =>
-  run(supabase.from('product_variants').update(patch).eq('id', id))
+  runChange(supabase.from('product_variants').update(patch).eq('id', id).select('id'))

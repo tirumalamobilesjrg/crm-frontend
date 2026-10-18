@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { DiscountPolicy, StaffProfile, StaffRole } from '../lib/types'
-import { run } from './db'
+import { run, runChange } from './db'
 
 export const listPolicies = () =>
   run<DiscountPolicy[]>(
@@ -8,11 +8,12 @@ export const listPolicies = () =>
   )
 
 export const savePolicy = (p: Pick<DiscountPolicy, 'role' | 'can_discount' | 'max_percent' | 'max_amount' | 'can_approve'>) =>
-  run(
+  runChange(
     supabase
       .from('discount_policies')
       .update({ can_discount: p.can_discount, max_percent: p.max_percent, max_amount: p.max_amount, can_approve: p.can_approve })
-      .eq('role', p.role),
+      .eq('role', p.role)
+      .select('role'),
   )
 
 export const listStaff = () =>
@@ -24,4 +25,4 @@ export const addStaff = (input: { user_id: string; full_name: string; role: Staf
   run(supabase.from('staff_profiles').insert(input))
 
 export const updateStaff = (user_id: string, patch: Partial<Pick<StaffProfile, 'role' | 'is_active' | 'full_name'>>) =>
-  run(supabase.from('staff_profiles').update(patch).eq('user_id', user_id))
+  runChange(supabase.from('staff_profiles').update(patch).eq('user_id', user_id).select('user_id'))
