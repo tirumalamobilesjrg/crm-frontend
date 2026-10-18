@@ -24,14 +24,14 @@ export const readyState = (role: StaffRole): AuthState => ({
   profile: profile(role),
 })
 
-export function renderApp(ui: ReactElement, opts: { state: AuthState; route?: string; signIn?: () => Promise<void> }) {
+export function renderApp(ui: ReactElement, opts: { state: AuthState; route?: string; routeState?: unknown; signIn?: () => Promise<void> }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   const value = { state: opts.state, signIn: opts.signIn ?? vi.fn().mockResolvedValue(undefined), signOut: vi.fn().mockResolvedValue(undefined) }
   return render(
     <QueryClientProvider client={client}>
       <ToastProvider>
         <AuthContext.Provider value={value}>
-          <MemoryRouter initialEntries={[opts.route ?? '/']}>{ui}</MemoryRouter>
+          <MemoryRouter initialEntries={[{ pathname: opts.route ?? '/', state: opts.routeState }]}>{ui}</MemoryRouter>
         </AuthContext.Provider>
       </ToastProvider>
     </QueryClientProvider>,

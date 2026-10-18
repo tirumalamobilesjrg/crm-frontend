@@ -9,6 +9,9 @@ import { DashboardPage } from './features/dashboard/DashboardPage'
 import { ProductsPage } from './features/catalogue/ProductsPage'
 import { ProductDetailPage } from './features/catalogue/ProductDetailPage'
 import { SetupPage } from './features/catalogue/SetupPage'
+import { SuppliersPage } from './features/purchasing/SuppliersPage'
+import { PurchasesPage } from './features/purchasing/PurchasesPage'
+import { PurchaseDetailPage } from './features/purchasing/PurchaseDetailPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 
 const queryClient = new QueryClient({
@@ -25,6 +28,9 @@ export function AppRoutes() {
           <Route path="catalogue/products" element={<ProductsPage />} />
           <Route path="catalogue/products/:id" element={<ProductDetailPage />} />
           <Route path="catalogue/setup" element={<SetupPage />} />
+          <Route path="purchasing/suppliers" element={<SuppliersPage />} />
+          <Route path="purchasing/purchases" element={<PurchasesPage />} />
+          <Route path="purchasing/purchases/:id" element={<PurchaseDetailPage />} />
           <Route element={<RequireRole roles={['admin']} />}>
             <Route path="settings" element={<SettingsPage />} />
           </Route>

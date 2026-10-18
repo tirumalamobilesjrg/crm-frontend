@@ -8,7 +8,7 @@ user interface; hiding a button here is only convenience, never the security bou
 > Backend repository: `tirumalamobilesjrg/crm-backend` (schema, row-level security, the transactional functions).
 > API reference: its `docs/API_CONTRACTS.md`.
 
-## What exists now (milestone 1)
+## What exists now (milestones 1 and 2)
 
 | Area | Admin | Manager |
 |---|---|---|
@@ -17,10 +17,13 @@ user interface; hiding a button here is only convenience, never the security bou
 | Brands and categories (add, hide/show) | yes | yes |
 | Products: list, search, create, publish / unpublish (with confirmation) | yes | yes |
 | Variants: add, edit prices, website price, active flag, stock type (phone by IMEI / accessory by quantity) | yes | yes |
+| Suppliers: list, add, deactivate | yes | yes |
+| Purchases: draft with lines (variant, quantity, unit cost, supplier invoice no.), cancel draft | yes | yes |
+| Receive stock: one scanner-friendly IMEI/serial box per phone (Enter = next box, bad/duplicate flagged), accessories by quantity | yes | yes |
 | Settings → Discount policy (Admin and Manager limits; "never reviewed" flag) | **edit** | no access |
 | Settings → Staff (list, add profile, change role, deactivate) | **yes** | no access |
 
-Not built yet: purchasing and receiving (IMEI entry), inventory views and stock adjustments, IMEI correction, POS billing and
+Not built yet: inventory views and stock adjustments, IMEI correction, POS billing and
 invoices, customers, expenses, reports. See `docs/STATUS.md`.
 
 ## Run it

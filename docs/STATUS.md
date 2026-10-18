@@ -31,8 +31,21 @@ stayed on the login page with no explanation); both are fixed and covered by tes
 
 ## Roadmap (suggested order)
 
-1. Purchasing: draft purchase, lines, **receive with IMEI/serial entry** (`receive_purchase`), accessory quantity receipts.
+1. ~~Purchasing and receiving~~ (built; see below).
 2. Inventory: devices and accessory stock, adjustments (`adjust_stock`, `adjust_quantity_stock`), IMEI correction (`correct_item_identifiers`).
 3. POS: cart (phones by IMEI, accessories by quantity), discounts with reason and Admin approval, single payment, `finalize_sale`, invoice view/print.
 4. Customers, expenses, simple reports.
 5. Product specifications and images; website price approval history.
+
+## Purchasing milestone (branch `feature/purchasing`)
+
+Built: suppliers, draft purchases and lines, receiving through `rpc/receive_purchase` (one idempotency key per attempt, reused if the same
+units are retried), "Add variant" opens automatically after creating a product. Checks run locally: lint, typecheck, unit/component tests and build pass.
+
+Not verified / known gaps:
+- Nothing ran against the real Supabase project (same caveat as above); the embedded selects on `purchases`/`purchase_items` are untested there.
+- The browser smoke test (`npm run smoke`) was not extended or re-run for these screens.
+- Only IMEI 1 or serial is captured per phone (no IMEI 2, condition or shelf location yet; the RPC accepts them).
+- Duplicates are detected within the delivery on screen; a clash with stock already in the database is reported by the server on receive.
+- Lines cannot be edited, only removed and re-added; purchases cannot be deleted, only cancelled.
+- Developer note: a global `legacy-peer-deps=true` npm setting skips `@testing-library/dom`; install with `npm ci --legacy-peer-deps=false`.

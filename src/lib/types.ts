@@ -67,3 +67,73 @@ export interface DiscountPolicy {
   can_approve: boolean
   configured_at: string | null
 }
+
+export type PurchaseStatus = 'draft' | 'received' | 'cancelled'
+
+export interface Supplier {
+  id: string
+  name: string
+  phone: string | null
+  email: string | null
+  address: string | null
+  notes: string | null
+  is_active: boolean
+}
+
+export interface Purchase {
+  id: string
+  supplier_id: string
+  supplier_invoice_no: string
+  invoice_date: string
+  status: PurchaseStatus
+  total: number
+  notes: string | null
+  received_at: string | null
+  created_at: string
+}
+
+export interface PurchaseRow extends Purchase {
+  supplier: { name: string } | null
+}
+
+export interface PurchaseLine {
+  id: string
+  purchase_id: string
+  variant_id: string
+  quantity: number
+  unit_cost: number
+  line_total: number
+  variant: {
+    sku: string
+    color: string | null
+    ram_gb: number | null
+    storage_gb: number | null
+    tracking_mode: TrackingMode
+    product: { name: string } | null
+  } | null
+}
+
+export interface VariantOption {
+  id: string
+  sku: string
+  color: string | null
+  ram_gb: number | null
+  storage_gb: number | null
+  tracking_mode: TrackingMode
+  is_active: boolean
+  product: { name: string } | null
+}
+
+export interface ReceiveUnit {
+  purchase_item_id: string
+  imei1?: string
+  serial_number?: string
+}
+
+export interface ReceiveResult {
+  purchase_id: string
+  units_received: number
+  quantity_lines_received: number
+  quantity_units_received: number
+  replayed: boolean
+}

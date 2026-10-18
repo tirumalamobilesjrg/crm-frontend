@@ -59,3 +59,12 @@ input[aria-invalid='true'], select[aria-invalid='true'] { border-color: var(--da
   .shell { grid-template-columns: 1fr; } .sidebar nav { flex-direction: row; flex-wrap: wrap; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; } .table { display: block; overflow-x: auto; }
 }
+
+.grid-3-wide { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: .75rem; align-items: end; margin-top: 1rem; }
+.unit-group { border: 1px solid var(--border); border-radius: 6px; margin: 0 0 1rem; padding: .5rem .75rem; }
+.unit-group legend { font-weight: 600; padding: 0 .35rem; }
+.unit-row { display: grid; grid-template-columns: 2rem minmax(0, 28rem) auto; gap: .5rem; align-items: center; margin: .35rem 0; }
+.unit-no { color: var(--muted); text-align: right; }
+.input-bad { border-color: var(--danger); }
+.input-ok { border-color: #2e8540; }
+@media (max-width: 700px) { .grid-3-wide { grid-template-columns: 1fr; } .unit-row { grid-template-columns: 1.5rem 1fr; } .unit-row small { grid-column: 2; } }

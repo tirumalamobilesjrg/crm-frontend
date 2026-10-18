@@ -15,6 +15,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Dashboard', roles: ['admin', 'manager'], end: true },
   { to: '/catalogue/products', label: 'Products', roles: ['admin', 'manager'] },
   { to: '/catalogue/setup', label: 'Brands & categories', roles: ['admin', 'manager'] },
+  { to: '/purchasing/purchases', label: 'Purchases', roles: ['admin', 'manager'] },
+  { to: '/purchasing/suppliers', label: 'Suppliers', roles: ['admin', 'manager'] },
   { to: '/settings', label: 'Settings', roles: ['admin'] },
 ]
 

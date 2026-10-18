@@ -28,7 +28,7 @@ function NewProductDialog({ onClose }: { onClose: () => void }) {
     onSuccess: (p) => {
       notify('Product created. Add its variants next.')
       void qc.invalidateQueries({ queryKey: ['products'] })
-      navigate(`/catalogue/products/${p.id}`)
+      navigate(`/catalogue/products/${p.id}`, { state: { addVariant: true } })
     },
     onError: (e) => notify(toAppError(e).message, 'bad'),
   })

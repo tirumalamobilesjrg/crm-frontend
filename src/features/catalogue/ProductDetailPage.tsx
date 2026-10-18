@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createVariant, getProduct, listVariants, updateVariant } from '../../api/catalogue'
 import { toAppError } from '../../lib/errors'
@@ -125,7 +125,11 @@ function VariantDialog(props: { productId: string; variant: Variant | null; onCl
 
 export function ProductDetailPage() {
   const { id = '' } = useParams()
-  const [editing, setEditing] = useState<Variant | 'new' | null>(null)
+  // Arriving straight from "Create product" opens the Add variant dialog so the product is never left without one.
+  const location = useLocation()
+  const [editing, setEditing] = useState<Variant | 'new' | null>(() =>
+    (location.state as { addVariant?: boolean } | null)?.addVariant ? 'new' : null,
+  )
   const product = useQuery({ queryKey: ['product', id], queryFn: () => getProduct(id) })
   const variants = useQuery({ queryKey: ['variants', id], queryFn: () => listVariants(id) })
 
