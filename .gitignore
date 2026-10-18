@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.local
+coverage/
+.vscode/*
+!.vscode/extensions.json
+*.log
+.DS_Store
+.smoke-dist/
+e2e/out/*
+!e2e/out/.gitkeep
