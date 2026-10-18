@@ -33,7 +33,7 @@ stayed on the login page with no explanation); both are fixed and covered by tes
 
 1. ~~Purchasing and receiving~~ (built).
 2. ~~Inventory: devices and accessory stock, adjustments, IMEI correction~~ (built; see "Inventory milestone").
-3. POS: cart (phones by IMEI, accessories by quantity), discounts with reason and Admin approval, single payment, `finalize_sale`, invoice view/print.
+3. ~~POS: cart, discounts with reason and Admin approval, single payment, `finalize_sale`, invoice view/print~~ (built; see "POS milestone").
 4. Customers, expenses, simple reports.
 5. Product specifications and images; website price approval history.
 
@@ -83,3 +83,15 @@ also run for real against a local Supabase stack (details in `docs/INVENTORY_API
 
 Known gaps: shelf location / condition not editable (no backend write path); no low-stock threshold; accessory list filtered in the browser; no purchasing
 capture of IMEI 2; the screens have only been driven in a browser against the stand-in.
+
+## POS milestone (branch `feature/pos`)
+
+Routes: `/pos` (new sale), `/sales` (list), `/sales/:saleId` (invoice, A4 print), `/approvals` (Admin: grant discount approvals). Contract, rules and gaps: `docs/POS_API.md`.
+
+Checks: lint, typecheck, unit/component/API tests, build, audit, and a 91-check browser smoke against the stand-in server (sale flow, discount approval, failed-then-retried
+completion with the same idempotency key, invoice, print layout, sales list, effect on inventory, Admin approvals). The real `finalize_sale`, invoices, approvals and the
+policy boundary were also run for real against a local Supabase stack (details in `docs/POS_API.md`). The browser screens have NOT been run against real Supabase.
+
+Known gaps: no returns/voids/refunds; no customer list or edit screen (search and quick-add only); invoice has no shop phone (not snapshotted by the backend); no camera scanning;
+reports and expenses not built; the Manager discount allowance must be configured by an Admin in Settings before Managers can discount without an approval.
+Windows note: Docker Desktop reserves ports 54323-54422, which includes the smoke stand-in's default 54399; run `SMOKE_MOCK_PORT=58421 npm run smoke` (any free port) in that case.

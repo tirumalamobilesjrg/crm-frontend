@@ -11,9 +11,9 @@ const luhn = (p14) => {
 const luhnValid = (v) => /^\d{15}$/.test(v) && luhn(v.slice(0, 14)) === v
 const SERIAL = /^[A-Z0-9][A-Z0-9-]{3,39}$/
 
-export const PHONE_VARIANT = { id: 'v-phone', sku: 'NOVA-X1-8-128', color: 'Black', ram_gb: 8, storage_gb: 128, tracking_mode: 'serialized', is_active: true, product: { name: 'X1', brand: { name: 'Nova' } } }
-export const CASE_VARIANT = { id: 'v-case', sku: 'NOVA-CASE', color: 'Black', ram_gb: null, storage_gb: null, tracking_mode: 'quantity', is_active: true, product: { name: 'Case', brand: { name: 'Nova' } } }
-export const CABLE_VARIANT = { id: 'v-cable', sku: 'NOVA-CABLE', color: null, ram_gb: null, storage_gb: null, tracking_mode: 'quantity', is_active: true, product: { name: 'Cable', brand: { name: 'Nova' } } }
+export const PHONE_VARIANT = { id: 'v-phone', sku: 'NOVA-X1-8-128', color: 'Black', ram_gb: 8, storage_gb: 128, mrp: 20000, selling_price: 19000, tracking_mode: 'serialized', is_active: true, product: { name: 'X1', brand: { name: 'Nova' } } }
+export const CASE_VARIANT = { id: 'v-case', sku: 'NOVA-CASE', color: 'Black', ram_gb: null, storage_gb: null, mrp: 500, selling_price: 400, tracking_mode: 'quantity', is_active: true, product: { name: 'Case', brand: { name: 'Nova' } } }
+export const CABLE_VARIANT = { id: 'v-cable', sku: 'NOVA-CABLE', color: null, ram_gb: null, storage_gb: null, mrp: 300, selling_price: 250, tracking_mode: 'quantity', is_active: true, product: { name: 'Cable', brand: { name: 'Nova' } } }
 
 const now = () => new Date().toISOString()
 export const devices = []
@@ -56,7 +56,7 @@ export function onReceive(units, lines, variants) {
 
 const embedDevice = (d) => {
   const v = [PHONE_VARIANT, CASE_VARIANT, CABLE_VARIANT].find((x) => x.id === d.variant_id) ?? PHONE_VARIANT
-  return { ...d, variant: { sku: v.sku, color: v.color, ram_gb: v.ram_gb, storage_gb: v.storage_gb, product: v.product } }
+  return { ...d, variant: { id: v.id, sku: v.sku, color: v.color, ram_gb: v.ram_gb, storage_gb: v.storage_gb, mrp: v.mrp, selling_price: v.selling_price, is_active: true, product: v.product } }
 }
 
 // `or` filter values look like (imei1.ilike.*49*,imei2.ilike.*49*,variant_id.in.(a,b)); commas inside () do not split.
@@ -76,6 +76,7 @@ const matchesOr = (row, parts) =>
   parts.some((p) => {
     const [col, op, ...rest] = p.split('.')
     const val = rest.join('.')
+    if (op === 'eq') return String(row[col] ?? '') === val
     if (op === 'ilike') return String(row[col] ?? '').toLowerCase().includes(val.replaceAll('*', '').toLowerCase())
     if (op === 'in') return val.replace(/^\(/, '').replace(/\)$/, '').split(',').includes(String(row[col]))
     return false
@@ -132,7 +133,7 @@ export function handleInventory({ table, req, url, payload, json, res, wantsObje
     const mode = params.get('tracking_mode')
     if (mode === 'eq.quantity' && sel.includes('stock:stock_levels')) {
       const only = params.get('id')?.slice(3)
-      const rows = [CASE_VARIANT, CABLE_VARIANT].filter((v) => !only || v.id === only).map((v) => ({ id: v.id, sku: v.sku, color: v.color, is_active: true, product: v.product, stock: stock.has(v.id) ? { on_hand: stock.get(v.id) } : null }))
+      const rows = [CASE_VARIANT, CABLE_VARIANT].filter((v) => !only || v.id === only).map((v) => ({ id: v.id, sku: v.sku, color: v.color, mrp: v.mrp, selling_price: v.selling_price, is_active: true, product: v.product, stock: stock.has(v.id) ? { on_hand: stock.get(v.id) } : null }))
       if (wantsObject) return rows.length === 1 ? (json(200, rows[0]), true) : (json(406, { code: 'PGRST116', message: 'no rows', details: null, hint: null }), true)
       json(200, rows)
       return true

@@ -6,6 +6,7 @@
 import http from 'node:http'
 import { randomUUID } from 'node:crypto'
 import { handleInventory, onReceive, forceStatus, PHONE_VARIANT, CASE_VARIANT } from './mock-inventory.mjs'
+import { handleSales, setFailNext, finalizeLog } from './mock-sales.mjs'
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const jwt = (sub) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`
 const USERS = {
@@ -62,6 +63,8 @@ const server = http.createServer((req, res) => {
     }
     if (url.pathname === '/__log') return json(200, log)
     if (url.pathname === '/__rpc') return json(200, rpcLog)
+    if (url.pathname === '/__finalize_log') return json(200, finalizeLog)
+    if (url.pathname === '/__fail_next_finalize') { setFailNext(true); return json(200, { ok: true }) }
     if (url.pathname === '/__device_status') return json(200, { ok: forceStatus(url.searchParams.get('imei'), url.searchParams.get('status')) })
     // test control hook: another user finalises/cancels a purchase while this page is open (stand-in only)
     if (url.pathname === '/__set_status') {
@@ -88,6 +91,7 @@ const server = http.createServer((req, res) => {
     if (!me) return json(401, { code: '42501', message: 'permission denied' })
     const payload = body ? JSON.parse(body) : null
     if (handleInventory({ table, req, url, payload, json, res, wantsObject, returnsRows })) return
+    if (handleSales({ table, req, url, payload, json, res, wantsObject, returnsRows, me })) return
     if (req.method === 'HEAD') return res.writeHead(200, { 'Content-Range': '0-0/5' }).end()
 
     if (table === 'staff_profiles') {
@@ -189,4 +193,5 @@ const server = http.createServer((req, res) => {
     return json(200, [])
   })
 })
-server.listen(54399, () => console.log('mock supabase on 54399'))
+const MOCK_PORT = Number(process.env.SMOKE_MOCK_PORT ?? 54399) // override if the OS reserves it (Windows reserves 54323-54422 while Docker Desktop runs)
+server.listen(MOCK_PORT, '127.0.0.1', () => console.log('mock supabase on ' + MOCK_PORT))

@@ -51,6 +51,7 @@ const identifierTaken = (what: string) => (value: string | undefined) =>
   value ? `${what} ${value} is already recorded on another device.` : `That ${what.toLowerCase()} is already recorded on another device.`
 
 const UNIQUE_BY_CONSTRAINT: Record<string, (value: string | undefined) => string> = {
+  customers_phone_key: () => 'A customer with this phone number already exists. Search for them instead.',
   suppliers_name_key: () => 'A supplier with this name already exists.',
   purchases_supplier_invoice_key: () => 'This supplier already has a purchase with that invoice number.',
   inventory_items_imei1_key: identifierTaken('IMEI'),
@@ -113,6 +114,17 @@ function purchaseStateMessage(message: string | undefined): string {
   return BY_CODE.TM007 as string
 }
 
+function discountMessage(message: string | undefined): string {
+  const m = (message ?? '').toLowerCase()
+  if (m.includes('already used')) return 'That discount approval was already used. Ask an Admin for a new one.'
+  if (m.includes('expired')) return 'That discount approval has expired. Ask an Admin for a new one.'
+  if (m.includes('exceeds the approved amount')) return 'The discount is more than the approval allows.'
+  if (m.includes('not found for this user')) return 'That discount approval was not granted to you.'
+  if (m.includes('approver is not')) return 'The approver is no longer allowed to approve this discount.'
+  if (m.includes('different user')) return 'An approval must be granted to a different person.'
+  return BY_CODE.TM005 as string
+}
+
 function invalidRequestMessage(message: string | undefined): string {
   const m = message ?? ''
   if (/expects \d+ units? but \d+ (was|were) supplied/i.test(m))
@@ -143,6 +155,7 @@ export function toAppError(err: unknown): AppError {
     return new AppError(CHECK_BY_CONSTRAINT[constraintName(message) ?? ''] ?? 'A value is not allowed. Check what you entered and try again.', code)
   }
   if (code === 'TM007') return new AppError(purchaseStateMessage(message), code)
+  if (code === 'TM005') return new AppError(discountMessage(message), code)
   if (code === 'TM003' || code === 'TM012') return new AppError(invalidRequestMessage(message), code)
   if (code && BY_CODE[code]) return new AppError(BY_CODE[code], code)
   if (err instanceof TypeError) return new AppError('Cannot reach the server. Check your internet connection.', 'network')

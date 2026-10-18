@@ -83,3 +83,23 @@ input[aria-invalid='true'], select[aria-invalid='true'] { border-color: var(--da
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .radio-row { border: 0; padding: 0; margin: 0 0 .75rem; }
 .radio-row legend { font-weight: 600; font-size: .9rem; }
+.pos-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 1rem; align-items: start; }
+.narrow { width: 7rem; }
+.pick-list { list-style: none; margin: .5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .35rem; align-items: flex-start; }
+.totals { margin: .5rem 0; } .totals div { display: flex; justify-content: space-between; padding: .15rem 0; } .totals dt, .totals dd { margin: 0; }
+.totals .grand { border-top: 1px solid var(--border); margin-top: .35rem; padding-top: .45rem; font-size: 1.2rem; font-weight: 700; }
+@media (max-width: 900px) { .pos-grid { grid-template-columns: 1fr; } }
+
+.invoice { background: #fff; color: #111; border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; max-width: 210mm; margin: 0 auto 2rem; }
+.invoice h2, .invoice h3 { margin: 0 0 .25rem; } .invoice p { margin: .15rem 0; }
+.invoice-head { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 2px solid #111; padding-bottom: .75rem; margin-bottom: 1rem; }
+.invoice-party { margin-bottom: 1rem; } .invoice-totals { max-width: 18rem; margin-left: auto; }
+.invoice-pay { margin-top: 1rem; } .invoice-foot { margin-top: 1.5rem; border-top: 1px solid #999; padding-top: .5rem; font-size: .8rem; color: #555; }
+@page { size: A4; margin: 12mm; }
+@media print {
+  .sidebar, .topbar, .no-print, .toasts { display: none !important; }
+  .shell { display: block; } .main, .content { padding: 0 !important; }
+  body { background: #fff; }
+  .invoice { border: 0; border-radius: 0; padding: 0; max-width: none; margin: 0; }
+  .invoice-lines { display: table !important; overflow: visible; }
+}

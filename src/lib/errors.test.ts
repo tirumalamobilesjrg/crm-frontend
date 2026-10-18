@@ -57,6 +57,10 @@ describe('toAppError', () => {
       expect(e.message).toBe('This supplier already has a purchase with that invoice number.')
       expectSafe(e.message)
     })
+    it('names a duplicate customer phone number', () => {
+      const e = toAppError({ code: '23505', message: 'duplicate key value violates unique constraint "customers_phone_key"', details: 'Key (phone)=(9876543210) already exists.' })
+      expect(e.message).toBe('A customer with this phone number already exists. Search for them instead.')
+    })
     it('explains an unknown constraint using a plain column from the details', () => {
       const e = toAppError({ code: '23505', message: 'duplicate key value violates unique constraint "product_variants_sku_key"', details: 'Key (sku)=(NOVA-1) already exists.' })
       expect(e.message).toBe('A record with this SKU ("NOVA-1") already exists.')
@@ -118,6 +122,17 @@ describe('toAppError', () => {
       const e = toAppError({ code: 'TM003', message: 'a unit refers to a purchase line 11111111-1111-1111-1111-111111111111 that is odd' })
       expect(e.message).toBe('The request was not valid. Refresh the page and check the details.')
     })
+  })
+
+  describe('discount approvals (TM005)', () => {
+    it.each([
+      ['discount approval was already used', /already used/],
+      ['discount approval has expired', /has expired/],
+      ['discount 1500 exceeds the approved amount 1000', /more than the approval allows/],
+      ['discount approval not found for this user', /not granted to you/],
+      ['the approver is not (or no longer) authorised for this discount', /no longer allowed/],
+      ['discount exceeds your limit (5 % per line); ask an approver for a discount approval', /That discount is not allowed/],
+    ])('maps %s', (message, expected) => expect(toAppError({ code: 'TM005', message }).message).toMatch(expected))
   })
 
   it('gives a clear message for the other business rules', () => {

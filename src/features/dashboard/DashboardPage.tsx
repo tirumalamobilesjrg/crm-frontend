@@ -32,7 +32,7 @@ export function DashboardPage() {
           </div>
         </div>
       )}
-      <p className="muted">Purchasing, inventory and billing screens are the next milestones.</p>
+      <p className="muted">Start a sale from New sale, receive stock under Purchases, and check stock under Inventory.</p>
     </section>
   )
 }

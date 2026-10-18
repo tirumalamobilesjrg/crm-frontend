@@ -15,6 +15,10 @@ import { PurchaseDetailPage } from './features/purchasing/PurchaseDetailPage'
 import { InventoryPage } from './features/inventory/InventoryPage'
 import { DeviceDetailPage } from './features/inventory/DeviceDetailPage'
 import { AccessoryDetailPage } from './features/inventory/AccessoryDetailPage'
+import { PosPage } from './features/pos/PosPage'
+import { SalesPage } from './features/pos/SalesPage'
+import { InvoicePage } from './features/pos/InvoicePage'
+import { ApprovalsPage } from './features/pos/ApprovalsPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 
 const queryClient = new QueryClient({
@@ -37,8 +41,12 @@ export function AppRoutes() {
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="inventory/devices/:id" element={<DeviceDetailPage />} />
           <Route path="inventory/accessories/:id" element={<AccessoryDetailPage />} />
+          <Route path="pos" element={<PosPage />} />
+          <Route path="sales" element={<SalesPage />} />
+          <Route path="sales/:id" element={<InvoicePage />} />
           <Route element={<RequireRole roles={['admin']} />}>
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="approvals" element={<ApprovalsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

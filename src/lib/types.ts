@@ -229,3 +229,107 @@ export interface CorrectionResult {
   inventory_item_id: string
   replayed: boolean
 }
+
+export type PaymentMethod = 'cash' | 'upi' | 'card' | 'bank_transfer' | 'cheque'
+
+export interface Customer {
+  id: string
+  name: string
+  phone: string | null
+  email: string | null
+  address: string | null
+  notes: string | null
+}
+
+/** A variant as the POS needs it: names plus the two prices the shop controls. */
+export interface SellableVariant {
+  id: string
+  sku: string
+  color: string | null
+  ram_gb: number | null
+  storage_gb: number | null
+  mrp: number
+  selling_price: number
+  is_active: boolean
+  product: { name: string; brand: { name: string } | null } | null
+}
+
+export interface SellableDevice {
+  id: string
+  variant_id: string
+  imei1: string | null
+  imei2: string | null
+  serial_number: string | null
+  status: InventoryStatus
+  variant: SellableVariant | null
+}
+
+export interface SellableAccessory extends Omit<SellableVariant, 'ram_gb' | 'storage_gb'> {
+  on_hand: number
+}
+
+export interface DiscountApproval {
+  id: string
+  requested_for: string
+  approved_by: string
+  max_amount: number
+  reason: string
+  expires_at: string
+  used_at: string | null
+  used_in_sale_id: string | null
+  created_at: string
+}
+
+export interface FinalizeSaleResult {
+  sale_id: string
+  invoice_id: string
+  invoice_number: string
+  total: number
+  discount_total: number
+  replayed: boolean
+}
+
+export interface InvoiceItem {
+  id: string
+  line_no: number
+  description: string
+  sku: string | null
+  imei1: string | null
+  imei2: string | null
+  serial_number: string | null
+  quantity: number
+  unit_price: number
+  discount_amount: number
+  line_total: number
+}
+
+export interface Invoice {
+  id: string
+  sale_id: string
+  invoice_number: string
+  issued_at: string
+  shop_name: string
+  shop_address: string | null
+  customer_name: string
+  customer_phone: string | null
+  customer_address: string | null
+  subtotal: number
+  discount_total: number
+  grand_total: number
+  items: InvoiceItem[]
+  payments: Array<{ method: PaymentMethod; amount: number; reference: string | null; received_at: string }>
+  sale: { sold_by: string; sold_at: string; discount_reason: string | null; discount_basis: string; discount_authorized_by: string | null; notes: string | null } | null
+}
+
+export interface SaleListRow {
+  id: string
+  sale_id: string
+  invoice_number: string
+  issued_at: string
+  customer_name: string
+  subtotal: number
+  discount_total: number
+  grand_total: number
+  payments: Array<{ method: PaymentMethod }>
+  sale: { sold_by: string } | null
+}

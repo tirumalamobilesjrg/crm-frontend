@@ -29,10 +29,11 @@ Sibling repos: `crm-backend` (schema, RLS, transactional functions — the sourc
 ## State
 Done (milestone 1): login/roles shell, dashboard counts, brands/categories, products + variants + publishing, Admin settings (discount policy, staff).
 Done (milestone 2, branch `feature/purchasing`): suppliers, draft purchases + lines, receiving via `receive_purchase` (one IMEI/serial box per phone, Enter = next, bad/duplicate flagged; accessories by quantity), "Add variant" opens after creating a product. Only IMEI 1 or serial is captured (no IMEI 2/condition/shelf yet).
-Verified: unit/component tests, browser smoke vs a stand-in server (64 checks, incl. purchasing and inventory), purchasing and inventory data layer + RPCs against a LOCAL Supabase stack, and a manual login + catalogue pass against the real project.
+Verified: unit/component tests, browser smoke vs a stand-in server (91 checks, incl. purchasing, inventory and POS), purchasing, inventory and POS data layer + RPCs against a LOCAL Supabase stack, and a manual login + catalogue pass against the real project.
 Not verified: the purchasing screens in a real browser against real Supabase (API and RPC behaviour was verified against a local stack; the browser smoke uses the stand-in), anything on the hosted project. `src/lib/types.ts` is hand-written (replace with `supabase gen types`).
 Done (milestone 3, branch `feature/inventory`): Inventory overview/search, device and accessory detail, stock adjustments (`adjust_stock`, `adjust_quantity_stock`), IMEI correction. Contract: `docs/INVENTORY_API.md`.
-Next: POS billing
+Done (milestone 4, branch `feature/pos`): POS (scan/cart/discount/approval/single payment via `finalize_sale`), sales list, invoice with A4 print, Admin discount approvals. Contract: `docs/POS_API.md`.
+Next: customers module, expenses, reports. Earlier plan was: POS billing
 (cart, discounts with reason/approval, single payment, invoice view, A4 print), then customers/expenses/reports.
 
 ## Gotchas
@@ -41,6 +42,7 @@ Next: POS billing
 - The backend now rejects a sale unit price above the variant's MRP (`TM003`, migration 0020). The POS must validate against MRP too.
 - Updates/deletes must end in `.select(<key>)` and use `runChange` (`src/api/db.ts`): PostgREST reports zero rows changed as success.
 - Never show raw database text; add new constraint names to `src/lib/errors.ts` with a test.
+- Docker Desktop reserves ports 54323-54422 on Windows; if the smoke stand-in cannot bind 54399 set `SMOKE_MOCK_PORT` to a free port.
 - On Windows run `npm run smoke` with `CHROME_PATH` set to an installed Chrome if Playwright's Chromium is not installed.
 
 ## Working agreements

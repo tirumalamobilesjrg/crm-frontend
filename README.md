@@ -22,11 +22,13 @@ user interface; hiding a button here is only convenience, never the security bou
 | Receive stock: one scanner-friendly IMEI/serial box per phone (Enter = next box, bad/duplicate flagged), accessories by quantity | yes | yes |
 | Inventory: summary, device list with IMEI/serial/product search, accessory stock, device and accessory detail with stock history | yes | yes |
 | Stock adjustments (device status, accessory quantity) and audited IMEI/serial correction, through the backend RPCs only | yes | yes |
+| POS: scan phones by IMEI, accessories by quantity, discounts (policy limits or Admin approval, with reason), one manual payment, invoice with A4 print | yes | yes |
+| Sales list and invoice view | yes | yes |
+| Discount approvals (grant a single-use approval) | **yes** | no access |
 | Settings → Discount policy (Admin and Manager limits; "never reviewed" flag) | **edit** | no access |
 | Settings → Staff (list, add profile, change role, deactivate) | **yes** | no access |
 
-Not built yet: POS billing and
-invoices, customers, expenses, reports. See `docs/STATUS.md`.
+Not built yet: customers module (list/edit), expenses, reports, returns. See `docs/STATUS.md`.
 
 ## Run it
 
@@ -53,7 +55,7 @@ Sign in with the Admin account created in Supabase (Authentication → Users) th
 | `npm run build` | typecheck + production build into `dist/` |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
 | `npm test` | unit and component tests (Vitest + Testing Library) |
-| `npm run smoke` | (64 checks) builds against a **stand-in** Supabase (`e2e/mock-supabase.mjs`) and drives the app in a real browser (needs `npx playwright-core install chromium` once, or `CHROME_PATH`) |
+| `npm run smoke` | (91 checks) builds against a **stand-in** Supabase (`e2e/mock-supabase.mjs`) and drives the app in a real browser (needs `npx playwright-core install chromium` once, or `CHROME_PATH`) |
 
 ## How it is organised
 
