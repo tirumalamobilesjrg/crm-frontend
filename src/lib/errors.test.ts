@@ -77,6 +77,12 @@ describe('toAppError', () => {
       expect(toAppError({ code: '23514', message: 'new row violates check constraint "inventory_imei2_valid"' }).message).toMatch(/IMEI is not valid/)
       expect(toAppError({ code: '23514', message: 'new row violates check constraint "inventory_serial_valid"' }).message).toMatch(/serial number is not valid/)
     })
+    it('explains the identifier rules enforced on correction', () => {
+      const msg = (name: string) => toAppError({ code: '23514', message: `new row for relation "inventory_items" violates check constraint "${name}"`, details: 'Failing row contains (1, 2)' }).message
+      expect(msg('inventory_has_identifier')).toBe('A device needs an IMEI 1 or a serial number.')
+      expect(msg('inventory_imei2_needs_imei1')).toBe('IMEI 2 needs an IMEI 1.')
+      expect(msg('inventory_imeis_differ')).toBe('IMEI 2 must be different from IMEI 1.')
+    })
     it('never echoes an unknown check constraint', () => {
       const e = toAppError({ code: '23514', message: 'new row for relation "x" violates check constraint "secret_rule"', details: 'Failing row contains (1, 2)' })
       expect(e.message).toBe('A value is not allowed. Check what you entered and try again.')

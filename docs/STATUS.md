@@ -31,8 +31,8 @@ stayed on the login page with no explanation); both are fixed and covered by tes
 
 ## Roadmap (suggested order)
 
-1. ~~Purchasing and receiving~~ (built; see below).
-2. Inventory: devices and accessory stock, adjustments (`adjust_stock`, `adjust_quantity_stock`), IMEI correction (`correct_item_identifiers`).
+1. ~~Purchasing and receiving~~ (built).
+2. ~~Inventory: devices and accessory stock, adjustments, IMEI correction~~ (built; see "Inventory milestone").
 3. POS: cart (phones by IMEI, accessories by quantity), discounts with reason and Admin approval, single payment, `finalize_sale`, invoice view/print.
 4. Customers, expenses, simple reports.
 5. Product specifications and images; website price approval history.
@@ -71,3 +71,15 @@ credentials for anything. To exercise the **real** backend from a browser, use a
 disposable users with the local admin API and give them `staff_profiles` rows, keep their passwords out of the repo (generate at run time, never
 commit), and run `supabase db reset --local` afterwards. Never use hosted accounts or production data for tests.
 The smoke job in CI stays non-blocking (`continue-on-error`) until it has passed there reliably.
+
+## Inventory milestone (branch `feature/inventory`)
+
+Routes: `/inventory` (summary, Phones and Accessories tabs, search, filters, pagination), `/inventory/devices/:id` (identifiers, cost, stock ledger,
+identifier history, Adjust status, Correct IMEI / serial), `/inventory/accessories/:id` (balance, ledger, Adjust stock). Both roles. Contract and gaps:
+`docs/INVENTORY_API.md`.
+
+Checks: lint, typecheck, 185 unit/component/API tests, build, audit, and a 64-check browser smoke (stand-in server). The data layer and all three RPCs were
+also run for real against a local Supabase stack (details in `docs/INVENTORY_API.md`). The browser screens have NOT been run against real Supabase.
+
+Known gaps: shelf location / condition not editable (no backend write path); no low-stock threshold; accessory list filtered in the browser; no purchasing
+capture of IMEI 2; the screens have only been driven in a browser against the stand-in.

@@ -5,6 +5,7 @@
 // duplicate IMEIs raise 23505 with the real message/details shape.
 import http from 'node:http'
 import { randomUUID } from 'node:crypto'
+import { handleInventory, onReceive, forceStatus, PHONE_VARIANT, CASE_VARIANT } from './mock-inventory.mjs'
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const jwt = (sub) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`
 const USERS = {
@@ -16,8 +17,8 @@ const log = []
 const rpcLog = []
 
 // ---- in-memory purchasing data
-const PHONE = { id: 'v-phone', sku: 'NOVA-X1-8-128', color: 'Black', ram_gb: 8, storage_gb: 128, tracking_mode: 'serialized', is_active: true, product: { name: 'Nova X1' } }
-const CASE = { id: 'v-case', sku: 'NOVA-CASE', color: 'Black', ram_gb: null, storage_gb: null, tracking_mode: 'quantity', is_active: true, product: { name: 'Nova Case' } }
+const PHONE = PHONE_VARIANT
+const CASE = CASE_VARIANT
 const variants = [PHONE, CASE]
 const suppliers = [{ id: 's-metro', name: 'Metro Traders', phone: null, email: null, address: null, notes: null, is_active: true }]
 const purchases = []
@@ -61,6 +62,7 @@ const server = http.createServer((req, res) => {
     }
     if (url.pathname === '/__log') return json(200, log)
     if (url.pathname === '/__rpc') return json(200, rpcLog)
+    if (url.pathname === '/__device_status') return json(200, { ok: forceStatus(url.searchParams.get('imei'), url.searchParams.get('status')) })
     // test control hook: another user finalises/cancels a purchase while this page is open (stand-in only)
     if (url.pathname === '/__set_status') {
       const p = purchases.find((x) => x.supplier_invoice_no === url.searchParams.get('invoice'))
@@ -84,8 +86,9 @@ const server = http.createServer((req, res) => {
     const sub = (() => { try { return JSON.parse(Buffer.from((req.headers.authorization ?? '').split('.')[1], 'base64url').toString()).sub } catch { return null } })()
     const me = byId(sub)
     if (!me) return json(401, { code: '42501', message: 'permission denied' })
-    if (req.method === 'HEAD') return res.writeHead(200, { 'Content-Range': '0-0/5' }).end()
     const payload = body ? JSON.parse(body) : null
+    if (handleInventory({ table, req, url, payload, json, res, wantsObject, returnsRows })) return
+    if (req.method === 'HEAD') return res.writeHead(200, { 'Content-Range': '0-0/5' }).end()
 
     if (table === 'staff_profiles') {
       const row = { user_id: me.id, ...me.profile, phone: null, is_active: true, created_at: '2026-01-01T00:00:00Z' }
@@ -177,6 +180,7 @@ const server = http.createServer((req, res) => {
       }
       seenHere.forEach((v) => IMEIS_IN_STOCK.add(v))
       p.status = 'received'; p.received_at = new Date().toISOString()
+      onReceive(payload.p_units, pl, variants)
       const qtyLines = pl.filter((x) => variants.find((v) => v.id === x.variant_id)?.tracking_mode === 'quantity')
       const response = { purchase_id: p.id, units_received: payload.p_units.length, quantity_lines_received: qtyLines.length, quantity_units_received: qtyLines.reduce((n, l) => n + l.quantity, 0), replayed: false }
       idempotency.set(payload.p_idempotency_key, { hash, response })

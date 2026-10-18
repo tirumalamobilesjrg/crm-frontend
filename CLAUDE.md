@@ -29,9 +29,10 @@ Sibling repos: `crm-backend` (schema, RLS, transactional functions — the sourc
 ## State
 Done (milestone 1): login/roles shell, dashboard counts, brands/categories, products + variants + publishing, Admin settings (discount policy, staff).
 Done (milestone 2, branch `feature/purchasing`): suppliers, draft purchases + lines, receiving via `receive_purchase` (one IMEI/serial box per phone, Enter = next, bad/duplicate flagged; accessories by quantity), "Add variant" opens after creating a product. Only IMEI 1 or serial is captured (no IMEI 2/condition/shelf yet).
-Verified: unit/component tests (126), browser smoke vs a stand-in server (40 checks, incl. purchasing), purchasing flow against a LOCAL Supabase stack, and a manual login + catalogue pass against the real project.
+Verified: unit/component tests, browser smoke vs a stand-in server (64 checks, incl. purchasing and inventory), purchasing and inventory data layer + RPCs against a LOCAL Supabase stack, and a manual login + catalogue pass against the real project.
 Not verified: the purchasing screens in a real browser against real Supabase (API and RPC behaviour was verified against a local stack; the browser smoke uses the stand-in), anything on the hosted project. `src/lib/types.ts` is hand-written (replace with `supabase gen types`).
-Next: inventory + adjustments + IMEI correction, then POS billing
+Done (milestone 3, branch `feature/inventory`): Inventory overview/search, device and accessory detail, stock adjustments (`adjust_stock`, `adjust_quantity_stock`), IMEI correction. Contract: `docs/INVENTORY_API.md`.
+Next: POS billing
 (cart, discounts with reason/approval, single payment, invoice view, A4 print), then customers/expenses/reports.
 
 ## Gotchas

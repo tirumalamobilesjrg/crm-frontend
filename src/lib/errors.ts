@@ -76,6 +76,9 @@ const CHECK_BY_CONSTRAINT: Record<string, string> = {
   inventory_imei1_valid: 'That IMEI is not valid. It must be 15 digits with a correct check digit.',
   inventory_imei2_valid: 'That IMEI is not valid. It must be 15 digits with a correct check digit.',
   inventory_serial_valid: 'That serial number is not valid. Use 4 to 40 letters, digits or dashes.',
+  inventory_has_identifier: 'A device needs an IMEI 1 or a serial number.',
+  inventory_imei2_needs_imei1: 'IMEI 2 needs an IMEI 1.',
+  inventory_imeis_differ: 'IMEI 2 must be different from IMEI 1.',
 }
 
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i

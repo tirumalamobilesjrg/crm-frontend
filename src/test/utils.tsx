@@ -17,6 +17,12 @@ export const profile = (role: StaffRole, over: Partial<StaffProfile> = {}): Staf
   ...over,
 })
 
+/** '/inventory?tab=accessories' -> { pathname, search } (MemoryRouter does not split a query out of pathname). */
+const splitRoute = (route: string) => {
+  const i = route.indexOf('?')
+  return i < 0 ? { pathname: route } : { pathname: route.slice(0, i), search: route.slice(i) }
+}
+
 export const readyState = (role: StaffRole): AuthState => ({
   status: 'ready',
   // only the parts the UI reads
@@ -31,7 +37,7 @@ export function renderApp(ui: ReactElement, opts: { state: AuthState; route?: st
     <QueryClientProvider client={client}>
       <ToastProvider>
         <AuthContext.Provider value={value}>
-          <MemoryRouter initialEntries={[{ pathname: opts.route ?? '/', state: opts.routeState }]}>{ui}</MemoryRouter>
+          <MemoryRouter initialEntries={[{ ...splitRoute(opts.route ?? '/'), state: opts.routeState }]}>{ui}</MemoryRouter>
         </AuthContext.Provider>
       </ToastProvider>
     </QueryClientProvider>,

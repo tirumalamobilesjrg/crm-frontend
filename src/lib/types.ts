@@ -137,3 +137,95 @@ export interface ReceiveResult {
   quantity_units_received: number
   replayed: boolean
 }
+
+export type InventoryStatus = 'in_stock' | 'sold' | 'damaged' | 'lost' | 'returned_to_supplier'
+export type ItemCondition = 'new' | 'refurbished' | 'used'
+export type AdjustmentReason = 'damaged' | 'lost' | 'found' | 'repaired' | 'returned_to_supplier' | 'correction'
+
+/** What the screens need to name a variant. */
+export interface VariantLabelInfo {
+  id: string
+  sku: string
+  color: string | null
+  ram_gb: number | null
+  storage_gb: number | null
+  product: { name: string; brand: { name: string } | null } | null
+}
+
+export interface InventoryItem {
+  id: string
+  variant_id: string
+  imei1: string | null
+  imei2: string | null
+  serial_number: string | null
+  status: InventoryStatus
+  condition: ItemCondition
+  shelf_location: string | null
+  received_at: string
+  updated_at: string
+  variant: Omit<VariantLabelInfo, 'id'> | null
+}
+
+export interface StockMovement {
+  id: number
+  movement_type: 'purchase_receipt' | 'sale' | 'adjustment'
+  from_status: InventoryStatus | null
+  to_status: InventoryStatus | null
+  quantity_delta: number | null
+  balance_after: number | null
+  created_by: string | null
+  created_at: string
+  adjustment: { reason: AdjustmentReason; notes: string } | null
+}
+
+export interface IdentifierCorrection {
+  id: string
+  old_imei1: string | null
+  old_imei2: string | null
+  old_serial_number: string | null
+  new_imei1: string | null
+  new_imei2: string | null
+  new_serial_number: string | null
+  reason: string
+  corrected_by: string
+  created_at: string
+}
+
+export interface AccessoryRow {
+  id: string
+  sku: string
+  color: string | null
+  is_active: boolean
+  product: { name: string; brand: { name: string } | null } | null
+  on_hand: number
+}
+
+export interface InventorySummary {
+  inStock: number
+  damaged: number
+  lost: number
+  returnedToSupplier: number
+  sold: number
+  accessorySkusInStock: number
+  accessoryUnits: number
+  accessoryUnitsTruncated: boolean
+}
+
+export interface AdjustStatusResult {
+  adjustment_id: string
+  from_status: InventoryStatus
+  to_status: InventoryStatus
+  replayed: boolean
+}
+
+export interface AdjustQuantityResult {
+  adjustment_id: string
+  balance_after: number
+  replayed: boolean
+}
+
+export interface CorrectionResult {
+  correction_id: string
+  inventory_item_id: string
+  replayed: boolean
+}

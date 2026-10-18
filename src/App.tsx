@@ -12,6 +12,9 @@ import { SetupPage } from './features/catalogue/SetupPage'
 import { SuppliersPage } from './features/purchasing/SuppliersPage'
 import { PurchasesPage } from './features/purchasing/PurchasesPage'
 import { PurchaseDetailPage } from './features/purchasing/PurchaseDetailPage'
+import { InventoryPage } from './features/inventory/InventoryPage'
+import { DeviceDetailPage } from './features/inventory/DeviceDetailPage'
+import { AccessoryDetailPage } from './features/inventory/AccessoryDetailPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 
 const queryClient = new QueryClient({
@@ -31,6 +34,9 @@ export function AppRoutes() {
           <Route path="purchasing/suppliers" element={<SuppliersPage />} />
           <Route path="purchasing/purchases" element={<PurchasesPage />} />
           <Route path="purchasing/purchases/:id" element={<PurchaseDetailPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="inventory/devices/:id" element={<DeviceDetailPage />} />
+          <Route path="inventory/accessories/:id" element={<AccessoryDetailPage />} />
           <Route element={<RequireRole roles={['admin']} />}>
             <Route path="settings" element={<SettingsPage />} />
           </Route>

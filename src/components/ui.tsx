@@ -118,3 +118,20 @@ export function useToast() {
   if (!ctx) throw new Error('useToast must be used inside <ToastProvider>')
   return ctx
 }
+
+export function Pagination({ page, pages, onPage }: { page: number; pages: number; onPage: (p: number) => void }) {
+  if (pages <= 1) return null
+  return (
+    <nav className="pager" aria-label="Pagination">
+      <Button small disabled={page <= 1} onClick={() => onPage(page - 1)}>
+        Previous
+      </Button>
+      <span>
+        Page {page} of {pages}
+      </span>
+      <Button small disabled={page >= pages} onClick={() => onPage(page + 1)}>
+        Next
+      </Button>
+    </nav>
+  )
+}
