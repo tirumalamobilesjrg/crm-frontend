@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { deletePhoto, listImages, photoUrl, setPrimaryPhoto, swapPhotoOrder, updateImageAlt, uploadPhoto } from '../../api/productMedia'
 import { toAppError } from '../../lib/errors'
 import type { ProductImage } from '../../lib/types'
 import { Badge, Button, ErrorBox, Loading, useToast } from '../../components/ui'
-import { MAX_PHOTO_BYTES, PHOTO_TYPES, sortImages, validateAlt, validatePhoto } from './media'
+import { MAX_BATCH, MAX_PHOTO_BYTES, PHOTO_TYPES, sortImages, validateAlt, validatePhoto } from './media'
 
 function PhotoCard({ image, index, total, all, productId }: { image: ProductImage; index: number; total: number; all: ProductImage[]; productId: string }) {
   const qc = useQueryClient()
@@ -58,61 +58,100 @@ function PhotoCard({ image, index, total, all, productId }: { image: ProductImag
   )
 }
 
+type Item = { id: number; file: File; problem: string | null; status: 'ready' | 'uploading' | 'failed'; error?: string }
+
 export function PhotosSection({ productId }: { productId: string }) {
   const qc = useQueryClient()
   const { notify } = useToast()
   const images = useQuery({ queryKey: ['product-images', productId], queryFn: () => listImages(productId) })
-  const [file, setFile] = useState<File | null>(null)
+  const [items, setItems] = useState<Item[]>([])
   const [alt, setAlt] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
-  const preview = useMemo(() => (file && !validatePhoto(file) ? URL.createObjectURL(file) : null), [file])
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
+  const [busy, setBusy] = useState(false)
+  const running = useRef(false)
+  const input = useRef<HTMLInputElement>(null)
+  const nextId = useRef(0)
   const sorted = sortImages(images.data ?? [])
-
-  const upload = useMutation({
-    mutationFn: () => uploadPhoto(productId, file!, alt, sorted.length === 0, crypto.randomUUID()),
-    onSuccess: () => {
-      notify('Photo uploaded')
-      setFile(null)
-      setAlt('')
-      void qc.invalidateQueries({ queryKey: ['product-images', productId] })
-    },
-    onError: (e) => notify(toAppError(e).message, 'bad'),
-  })
+  const single = items.length === 1 ? items[0]! : null
+  const preview = useMemo(() => (single && !single.problem ? URL.createObjectURL(single.file) : null), [single])
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
 
   function choose(e: ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0] ?? null
-    setFile(f)
-    setProblem(f ? validatePhoto(f) : null)
-  }
-  function submit(e: FormEvent) {
-    e.preventDefault()
-    const p = validatePhoto(file) ?? validateAlt(alt)
-    setProblem(p)
-    if (!p && !upload.isPending) upload.mutate()
+    const all = Array.from(e.target.files ?? [])
+    const picked = all.slice(0, MAX_BATCH)
+    setItems(picked.map((file) => ({ id: nextId.current++, file, problem: validatePhoto(file), status: 'ready' as const })))
+    setProblem(all.length > MAX_BATCH ? `Only the first ${MAX_BATCH} photos were kept. Upload them, then add the rest.` : picked.length === 1 ? validatePhoto(picked[0]!) : null)
   }
 
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    if (running.current) return
+    const queue = items.filter((i) => !i.problem)
+    const p = queue.length === 0 ? (items.length === 0 ? 'Choose a photo first.' : 'None of the chosen files can be uploaded. Fix the problems shown.') : single ? validateAlt(alt) : null
+    setProblem(p)
+    if (p) return
+    running.current = true
+    setBusy(true)
+    let hasPhotos = sorted.length > 0
+    let done = 0
+    for (const item of queue) {
+      setItems((cur) => cur.map((i) => (i.id === item.id ? { ...i, status: 'uploading' } : i)))
+      try {
+        await uploadPhoto(productId, item.file, single ? alt : '', !hasPhotos, crypto.randomUUID())
+        hasPhotos = true
+        done += 1
+        setItems((cur) => cur.filter((i) => i.id !== item.id))
+      } catch (err) {
+        setItems((cur) => cur.map((i) => (i.id === item.id ? { ...i, status: 'failed', error: toAppError(err).message } : i)))
+      }
+    }
+    running.current = false
+    setBusy(false)
+    if (done > 0) void qc.invalidateQueries({ queryKey: ['product-images', productId] })
+    if (done === queue.length) {
+      notify(done === 1 ? 'Photo uploaded' : `${done} photos uploaded`)
+      setAlt('')
+      if (input.current) input.current.value = ''
+    } else {
+      notify(done === 0 ? 'No photos were uploaded. See the reasons below.' : `${done} of ${queue.length} photos uploaded. See the ones that failed below.`, 'bad')
+    }
+  }
+
+  const readyCount = items.filter((i) => !i.problem).length
   return (
     <section className="panel" aria-label="Photos">
       <h2>Photos</h2>
       <p className="muted">
-        Photos are public: they appear on the website once the product is published. JPEG, PNG or WebP, up to {MAX_PHOTO_BYTES / 1024 / 1024} MB each. The main photo is shown first.
+        Photos are public: they appear on the website once the product is published. JPEG, PNG or WebP, up to {MAX_PHOTO_BYTES / 1024 / 1024} MB each. You can choose up to {MAX_BATCH} photos at once. The main photo is shown first.
       </p>
-      <form onSubmit={submit} className="photo-upload" noValidate>
+      <form onSubmit={(e) => void submit(e)} className="photo-upload" noValidate>
         <label className="field">
           <span>Photo</span>
-          <input type="file" accept={PHOTO_TYPES.join(',')} onChange={choose} aria-invalid={Boolean(problem)} />
+          <input ref={input} type="file" multiple accept={PHOTO_TYPES.join(',')} onChange={choose} aria-invalid={Boolean(problem)} disabled={busy} />
         </label>
-        <label className="field">
-          <span>Description (optional)</span>
-          <input value={alt} maxLength={200} onChange={(e) => setAlt(e.target.value)} placeholder="e.g. Nova X1 in black, front view" />
-        </label>
+        {items.length <= 1 ? (
+          <label className="field">
+            <span>Description (optional)</span>
+            <input value={alt} maxLength={200} onChange={(e) => setAlt(e.target.value)} placeholder="e.g. Nova X1 in black, front view" />
+          </label>
+        ) : (
+          <p className="muted small">Add descriptions after uploading, one photo at a time.</p>
+        )}
         {preview && <img className="photo-preview" src={preview} alt="Preview of the chosen photo" />}
-        <Button type="submit" variant="primary" disabled={upload.isPending}>
-          {upload.isPending ? 'Uploading…' : 'Upload photo'}
+        <Button type="submit" variant="primary" disabled={busy}>
+          {busy ? 'Uploading…' : readyCount > 1 ? `Upload ${readyCount} photos` : 'Upload photo'}
         </Button>
         {problem && <p role="alert" className="field-error">{problem}</p>}
       </form>
+      {(items.length > 1 || items.some((i) => i.status === 'failed')) && (
+        <ul className="muted" aria-label="Chosen photos">
+          {items.map((i) => (
+            <li key={i.id}>
+              {i.file.name}: {i.problem ?? (i.status === 'uploading' ? 'uploading…' : i.status === 'failed' ? `failed. ${i.error}` : 'ready')}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {images.isPending && <Loading />}
       {images.isError && <ErrorBox error={images.error} retry={() => void images.refetch()} />}

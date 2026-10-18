@@ -95,8 +95,54 @@ describe('PhotosSection', () => {
     await screen.findByText(/No photos yet/)
     await user.upload(screen.getByLabelText('Photo'), png())
     await user.click(screen.getByRole('button', { name: 'Upload photo' }))
-    expect(await screen.findByText('You do not have permission to do that.')).toBeInTheDocument()
+    expect(await screen.findByText(/You do not have permission to do that\./)).toBeInTheDocument()
     expect(screen.queryByText('Photo uploaded')).not.toBeInTheDocument()
+  })
+
+
+  it('uploads several photos one after another, only the very first as the main photo, with no shared description', async () => {
+    vi.mocked(media.uploadPhoto).mockResolvedValue(image('n', 0))
+    const user = userEvent.setup()
+    showPhotos()
+    await screen.findByText(/No photos yet/)
+    await user.upload(screen.getByLabelText('Photo'), [png('a.png'), png('b.png'), png('c.webp', 'image/webp')])
+    expect(screen.queryByLabelText('Description (optional)')).not.toBeInTheDocument()
+    expect(screen.getByText(/Add descriptions after uploading/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Upload 3 photos' }))
+    await waitFor(() => expect(media.uploadPhoto).toHaveBeenCalledTimes(3))
+    const calls = vi.mocked(media.uploadPhoto).mock.calls
+    expect(calls.map((c) => (c[1] as File).name)).toEqual(['a.png', 'b.png', 'c.webp'])
+    expect(calls.map((c) => c[3])).toEqual([true, false, false])
+    expect(new Set(calls.map((c) => c[4])).size).toBe(3)
+    expect(calls.every((c) => c[2] === '')).toBe(true)
+    expect(await screen.findByText('3 photos uploaded')).toBeInTheDocument()
+  })
+
+  it('skips an unsuitable file, keeps going after a failure, and lists what went wrong', async () => {
+    vi.mocked(media.uploadPhoto)
+      .mockResolvedValueOnce(image('n', 0))
+      .mockRejectedValueOnce(new AppError('The photo could not be saved. Try again.', 'storage'))
+      .mockResolvedValue(image('m', 1))
+    const user = userEvent.setup({ applyAccept: false })
+    showPhotos()
+    await screen.findByText(/No photos yet/)
+    await user.upload(screen.getByLabelText('Photo'), [png('a.png'), png('b.png'), png('c.png'), png('x.gif', 'image/gif')])
+    const list = screen.getByRole('list', { name: 'Chosen photos' })
+    expect(within(list).getByText(/x.gif: Use a JPEG, PNG or WebP photo./)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Upload 3 photos' }))
+    await waitFor(() => expect(media.uploadPhoto).toHaveBeenCalledTimes(3))
+    expect(await screen.findByText('2 of 3 photos uploaded. See the ones that failed below.')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Chosen photos' })).getByText(/b.png: failed. The photo could not be saved/)).toBeInTheDocument()
+    expect(media.uploadPhoto).toHaveBeenCalledTimes(3)
+  })
+
+  it('keeps only the first ten chosen photos and says so', async () => {
+    const user = userEvent.setup()
+    showPhotos()
+    await screen.findByText(/No photos yet/)
+    await user.upload(screen.getByLabelText('Photo'), Array.from({ length: 12 }, (_, i) => png(`p${i}.png`)))
+    expect(await screen.findByText(/Only the first 10 photos were kept/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Upload 10 photos' })).toBeInTheDocument()
   })
 
   it('makes a photo the main one, moves photos, and disables moves at the ends', async () => {

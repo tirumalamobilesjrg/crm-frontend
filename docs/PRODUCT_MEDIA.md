@@ -32,3 +32,7 @@ The browser screens ran only against the **stand-in** server in `npm run smoke` 
 - Variant-specific photos (the table supports `variant_id`, the screens attach photos to the product only).
 - Bulk upload and drag-to-reorder (use the arrow buttons).
 - Image files are not covered by the database backup scripts.
+
+## Uploading several photos at once
+The photo picker accepts up to 10 files at a time (`MAX_BATCH`). They are uploaded one after another (each with its own random file name and the same 2 MB / JPEG-PNG-WebP rules), so the order is stable and a failure does not stop the rest.
+Only the very first photo of a product without photos becomes the main photo. A shared description is not applied to a batch: add descriptions per photo afterwards. Unsuitable files are skipped and listed with the reason; failed uploads stay in the list with the server's reason.

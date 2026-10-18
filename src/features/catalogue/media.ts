@@ -2,6 +2,7 @@ import type { ProductImage, ProductSpec } from '../../lib/types'
 
 // Mirrors the bucket rules (migration 0021). Storage enforces them again; this gives instant, specific feedback.
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024
+export const MAX_BATCH = 10 // photos per upload; they are sent one at a time
 export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
 const EXTENSION: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
 
