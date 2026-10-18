@@ -36,7 +36,8 @@ Done (milestone 4, branch `feature/pos`): POS (scan/cart/discount/approval/singl
 Done (milestone 5, branch `feature/back-office`): customers (list, detail, edit, history, Admin delete), expenses, reports with CSV, Admin audit log. Contract: `docs/BACKOFFICE.md`.
 Done (milestone 6, branch `feature/product-media`): product specifications and photos editor (needs backend migration 0021). Contract: `docs/PRODUCT_MEDIA.md`.
 Done (milestone 7, branch `feature/ui-redesign`): CRM UI/UX overhaul (design tokens, light/dark theme, grouped nav + phone drawer, dashboard, focus-trapped dialogs). See `docs/UI_DESIGN.md`.
-Next: the public website. Earlier plan was: POS billing
+Done (branch `feature/shop-profile-settings`): Admin Settings "Shop details" tab (name, phone, WhatsApp, email, address, opening hours, map link, about) writing `shop_settings`; the public website reads it via `public_shop_profile`. Needs backend migration 0022 (branch `feature/shop-profile` in crm-backend) applied first; not yet run against a real Supabase stack.
+Next: finish the public website (separate repo `public-website`). Earlier plan was: POS billing
 (cart, discounts with reason/approval, single payment, invoice view, A4 print), then customers/expenses/reports.
 
 ## Gotchas

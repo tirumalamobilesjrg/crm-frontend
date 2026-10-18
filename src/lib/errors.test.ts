@@ -103,6 +103,11 @@ describe('toAppError', () => {
       expect(msg('customers_phone_check')).toMatch(/7 to 15 digits/)
       expect(msg('customers_name_check')).toMatch(/customer name/)
     })
+    it('explains the shop detail rules', () => {
+      const msg = (name: string) => toAppError({ code: '23514', message: `new row for relation "shop_settings" violates check constraint "${name}"`, details: 'Failing row contains (t)' }).message
+      expect(msg('shop_settings_map_url_check')).toMatch(/https/)
+      expect(msg('shop_settings_about_check')).toMatch(/2000/)
+    })
     it('never echoes an unknown check constraint', () => {
       const e = toAppError({ code: '23514', message: 'new row for relation "x" violates check constraint "secret_rule"', details: 'Failing row contains (1, 2)' })
       expect(e.message).toBe('A value is not allowed. Check what you entered and try again.')

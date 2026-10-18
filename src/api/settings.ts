@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import type { DiscountPolicy, StaffProfile, StaffRole } from '../lib/types'
+import type { DiscountPolicy, ShopProfile, StaffProfile, StaffRole } from '../lib/types'
 import { run, runChange } from './db'
 
 export const listPolicies = () =>
@@ -15,6 +15,13 @@ export const savePolicy = (p: Pick<DiscountPolicy, 'role' | 'can_discount' | 'ma
       .eq('role', p.role)
       .select('role'),
   )
+
+const SHOP_COLUMNS = 'shop_name, address, phone, whatsapp, email, opening_hours, map_url, about'
+
+export const loadShopProfile = () => run<ShopProfile>(supabase.from('shop_settings').select(SHOP_COLUMNS).single())
+
+/** shop_settings is a single row (id = true); only an Admin can update it, and zero rows changed is reported as an error. */
+export const saveShopProfile = (p: ShopProfile) => runChange(supabase.from('shop_settings').update(p).eq('id', true).select('id'))
 
 export const listStaff = () =>
   run<StaffProfile[]>(

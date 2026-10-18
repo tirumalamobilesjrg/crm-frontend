@@ -59,6 +59,18 @@ export interface Variant {
   tracking_mode: TrackingMode
 }
 
+/** The public contact details in shop_settings (shown on the website through public_shop_profile). */
+export interface ShopProfile {
+  shop_name: string
+  address: string | null
+  phone: string | null
+  whatsapp: string | null
+  email: string | null
+  opening_hours: string | null
+  map_url: string | null
+  about: string | null
+}
+
 export interface DiscountPolicy {
   role: StaffRole
   can_discount: boolean
