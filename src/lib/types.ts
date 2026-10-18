@@ -333,3 +333,38 @@ export interface SaleListRow {
   payments: Array<{ method: PaymentMethod }>
   sale: { sold_by: string } | null
 }
+
+export interface CustomerRecord extends Customer {
+  created_at: string
+}
+
+export interface CustomerInvoiceRow {
+  id: string
+  sale_id: string
+  invoice_number: string
+  issued_at: string
+  subtotal: number
+  discount_total: number
+  grand_total: number
+}
+
+export interface Expense {
+  id: string
+  expense_date: string
+  category: string
+  description: string | null
+  amount: number
+  paid_via: PaymentMethod
+  created_at: string
+}
+
+export interface AuditEntry {
+  id: number
+  occurred_at: string
+  actor_id: string | null
+  actor_role: string | null
+  action: string
+  table_name: string | null
+  record_id: string | null
+  detail: Record<string, unknown> | null
+}

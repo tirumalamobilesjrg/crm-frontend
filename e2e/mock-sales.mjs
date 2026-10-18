@@ -64,6 +64,12 @@ export function handleSales({ table, req, url, payload, json, res, wantsObject, 
 
   if (table === 'invoices' && req.method === 'GET') {
     let rows = sales
+    const cid = params.get('customer_id')
+    if (cid?.startsWith('eq.')) rows = rows.filter((s) => s.invoice.customer_id === cid.slice(3))
+    for (const v of params.getAll('issued_at')) {
+      if (v.startsWith('gte.')) rows = rows.filter((s) => s.invoice.issued_at >= v.slice(4))
+      if (v.startsWith('lte.')) rows = rows.filter((s) => s.invoice.issued_at <= v.slice(4))
+    }
     const saleId = params.get('sale_id')
     if (saleId?.startsWith('eq.')) rows = rows.filter((s) => s.sale.id === saleId.slice(3))
     const or = params.get('or')
@@ -163,12 +169,12 @@ export function handleSales({ table, req, url, payload, json, res, wantsObject, 
       const description = [v.product.brand.name, v.product.name, v.color, v.storage_gb ? `${v.storage_gb}GB` : null].filter(Boolean).join(' ')
       if (l.device) { l.device.status = 'sold'; l.device.updated_at = now(); movements.push({ id: movements.length + 1000, inventory_item_id: l.device.id, variant_id: v.id, movement_type: 'sale', from_status: 'in_stock', to_status: 'sold', quantity_delta: null, balance_after: null, created_by: me.id, created_at: now(), adjustment: null }) }
       else { const bal = stock.get(v.id) - l.qty; stock.set(v.id, bal); movements.push({ id: movements.length + 1000, inventory_item_id: null, variant_id: v.id, movement_type: 'sale', from_status: null, to_status: null, quantity_delta: -l.qty, balance_after: bal, created_by: me.id, created_at: now(), adjustment: null }) }
-      return { id: randomUUID(), line_no: l.ord, description, sku: v.sku, imei1: l.device?.imei1 ?? null, imei2: l.device?.imei2 ?? null, serial_number: l.device?.serial_number ?? null, quantity: l.qty, unit_price: l.it.unit_price, discount_amount: l.it.discount_amount ?? 0, line_total: (l.gross - l.disc) / 100 }
+      return { device_id: l.device?.id ?? null, id: randomUUID(), line_no: l.ord, description, sku: v.sku, imei1: l.device?.imei1 ?? null, imei2: l.device?.imei2 ?? null, serial_number: l.device?.serial_number ?? null, quantity: l.qty, unit_price: l.it.unit_price, discount_amount: l.it.discount_amount ?? 0, line_total: (l.gross - l.disc) / 100 }
     })
     if (approval) { approval.used_at = now(); approval.used_in_sale_id = saleId }
     sales.push({
       sale: { id: saleId, sold_by: me.id, sold_at: now(), discount_reason: discount > 0 ? payload.p_discount_reason.trim() : null, discount_basis: basis, discount_authorized_by: authorizer, notes: payload.p_notes ?? null },
-      invoice: { id: invoiceId, sale_id: saleId, invoice_number: number, issued_at: now(), shop_name: 'Tirumala Mobiles', shop_address: 'Main Road, Hyderabad', customer_name: customer?.name ?? 'Walk-in customer', customer_phone: customer?.phone ?? null, customer_address: customer?.address ?? null, subtotal: subtotal / 100, discount_total: discount / 100, grand_total: total / 100 },
+      invoice: { id: invoiceId, sale_id: saleId, invoice_number: number, issued_at: now(), shop_name: 'Tirumala Mobiles', shop_address: 'Main Road, Hyderabad', customer_id: customer?.id ?? null, customer_name: customer?.name ?? 'Walk-in customer', customer_phone: customer?.phone ?? null, customer_address: customer?.address ?? null, subtotal: subtotal / 100, discount_total: discount / 100, grand_total: total / 100 },
       items: items2,
       payment: { method: pay.method, amount: pay.amount, reference: pay.reference ?? null, received_at: now() },
     })

@@ -87,6 +87,13 @@ describe('toAppError', () => {
       expect(msg('inventory_imei2_needs_imei1')).toBe('IMEI 2 needs an IMEI 1.')
       expect(msg('inventory_imeis_differ')).toBe('IMEI 2 must be different from IMEI 1.')
     })
+    it('explains the expense and customer rules', () => {
+      const msg = (name: string) => toAppError({ code: '23514', message: `new row for relation "x" violates check constraint "${name}"`, details: 'Failing row contains (1, 2)' }).message
+      expect(msg('expenses_amount_check')).toBe('The amount must be more than zero.')
+      expect(msg('expenses_category_check')).toMatch(/Enter a category/)
+      expect(msg('customers_phone_check')).toMatch(/7 to 15 digits/)
+      expect(msg('customers_name_check')).toMatch(/customer name/)
+    })
     it('never echoes an unknown check constraint', () => {
       const e = toAppError({ code: '23514', message: 'new row for relation "x" violates check constraint "secret_rule"', details: 'Failing row contains (1, 2)' })
       expect(e.message).toBe('A value is not allowed. Check what you entered and try again.')

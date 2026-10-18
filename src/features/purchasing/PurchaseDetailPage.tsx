@@ -188,6 +188,10 @@ export function PurchaseDetailPage() {
       void qc.invalidateQueries({ queryKey: ['purchase-lines', id] })
       void qc.invalidateQueries({ queryKey: ['purchases'] })
       void qc.invalidateQueries({ queryKey: ['dashboard'] })
+      // received stock changes what Inventory, the POS and the stock-value report show
+      void qc.invalidateQueries({ queryKey: ['inventory'] })
+      void qc.invalidateQueries({ queryKey: ['pos'] })
+      void qc.invalidateQueries({ queryKey: ['reports'] })
     },
     onError: (e) => notify(toAppError(e).message, 'bad'),
   })

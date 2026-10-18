@@ -17,10 +17,14 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/catalogue/setup', label: 'Brands & categories', roles: ['admin', 'manager'] },
   { to: '/pos', label: 'New sale', roles: ['admin', 'manager'] },
   { to: '/sales', label: 'Sales', roles: ['admin', 'manager'] },
+  { to: '/customers', label: 'Customers', roles: ['admin', 'manager'] },
   { to: '/inventory', label: 'Inventory', roles: ['admin', 'manager'] },
   { to: '/purchasing/purchases', label: 'Purchases', roles: ['admin', 'manager'] },
   { to: '/purchasing/suppliers', label: 'Suppliers', roles: ['admin', 'manager'] },
+  { to: '/expenses', label: 'Expenses', roles: ['admin', 'manager'] },
+  { to: '/reports', label: 'Reports', roles: ['admin', 'manager'] },
   { to: '/approvals', label: 'Discount approvals', roles: ['admin'] },
+  { to: '/audit', label: 'Audit log', roles: ['admin'] },
   { to: '/settings', label: 'Settings', roles: ['admin'] },
 ]
 

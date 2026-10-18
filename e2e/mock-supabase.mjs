@@ -7,6 +7,7 @@ import http from 'node:http'
 import { randomUUID } from 'node:crypto'
 import { handleInventory, onReceive, forceStatus, PHONE_VARIANT, CASE_VARIANT } from './mock-inventory.mjs'
 import { handleSales, setFailNext, finalizeLog } from './mock-sales.mjs'
+import { handleBackOffice } from './mock-backoffice.mjs'
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const jwt = (sub) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`
 const USERS = {
@@ -91,6 +92,7 @@ const server = http.createServer((req, res) => {
     if (!me) return json(401, { code: '42501', message: 'permission denied' })
     const payload = body ? JSON.parse(body) : null
     if (handleInventory({ table, req, url, payload, json, res, wantsObject, returnsRows })) return
+    if (handleBackOffice({ table, req, url, payload, json, res, wantsObject, returnsRows, me })) return
     if (handleSales({ table, req, url, payload, json, res, wantsObject, returnsRows, me })) return
     if (req.method === 'HEAD') return res.writeHead(200, { 'Content-Range': '0-0/5' }).end()
 

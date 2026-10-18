@@ -56,6 +56,7 @@ export interface CustomerInput {
   phone: string | null
   email: string | null
   address: string | null
+  notes?: string | null
 }
 export const createCustomer = (input: CustomerInput) => run<Customer>(supabase.from('customers').insert(input).select(CUSTOMER_COLUMNS).single())
 

@@ -21,6 +21,8 @@ function AdjustQuantityDialog({ accessory, onClose }: { accessory: AccessoryRow;
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['inventory'] })
     void qc.invalidateQueries({ queryKey: ['accessory', accessory.id] })
+    void qc.invalidateQueries({ queryKey: ['pos'] })
+    void qc.invalidateQueries({ queryKey: ['reports'] })
   }
   const save = useMutation({
     mutationFn: (v: NonNullable<ReturnType<typeof validateQuantityAdjustment>['value']>) =>

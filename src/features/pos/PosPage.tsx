@@ -102,6 +102,8 @@ export function PosPage() {
       attempt.clear()
       void qc.invalidateQueries({ queryKey: ['inventory'] })
       void qc.invalidateQueries({ queryKey: ['sales'] })
+      void qc.invalidateQueries({ queryKey: ['customer-invoices'] }) // the customer's purchase history
+      void qc.invalidateQueries({ queryKey: ['reports'] })
       void qc.invalidateQueries({ queryKey: ['pos'] })
       void qc.invalidateQueries({ queryKey: ['dashboard'] })
       notify(`Sale completed. Invoice ${r.invoice_number}.`)

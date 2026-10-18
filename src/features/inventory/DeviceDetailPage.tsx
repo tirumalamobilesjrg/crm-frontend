@@ -17,6 +17,8 @@ import {
 function refreshDevice(qc: ReturnType<typeof useQueryClient>, id: string) {
   void qc.invalidateQueries({ queryKey: ['inventory'] })
   void qc.invalidateQueries({ queryKey: ['device', id] })
+  void qc.invalidateQueries({ queryKey: ['pos'] }) // a device that is no longer in stock cannot be sold
+  void qc.invalidateQueries({ queryKey: ['reports'] })
 }
 
 function AdjustStatusDialog({ device, onClose }: { device: InventoryItem; onClose: () => void }) {

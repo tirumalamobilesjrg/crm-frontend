@@ -14,13 +14,15 @@ const SERIAL = /^[A-Z0-9][A-Z0-9-]{3,39}$/
 export const PHONE_VARIANT = { id: 'v-phone', sku: 'NOVA-X1-8-128', color: 'Black', ram_gb: 8, storage_gb: 128, mrp: 20000, selling_price: 19000, tracking_mode: 'serialized', is_active: true, product: { name: 'X1', brand: { name: 'Nova' } } }
 export const CASE_VARIANT = { id: 'v-case', sku: 'NOVA-CASE', color: 'Black', ram_gb: null, storage_gb: null, mrp: 500, selling_price: 400, tracking_mode: 'quantity', is_active: true, product: { name: 'Case', brand: { name: 'Nova' } } }
 export const CABLE_VARIANT = { id: 'v-cable', sku: 'NOVA-CABLE', color: null, ram_gb: null, storage_gb: null, mrp: 300, selling_price: 250, tracking_mode: 'quantity', is_active: true, product: { name: 'Cable', brand: { name: 'Nova' } } }
+export const VARIANTS_BY_SKU = {}
+for (const v of [PHONE_VARIANT, CASE_VARIANT, CABLE_VARIANT]) VARIANTS_BY_SKU[v.sku] = v
 
 const now = () => new Date().toISOString()
 export const devices = []
 export const movements = []
 export const corrections = []
 export const stock = new Map([[CASE_VARIANT.id, 20]])
-const costs = new Map()
+export const costs = new Map()
 const idem = new Map()
 let movementId = 0
 let listCalls = 0
@@ -56,7 +58,7 @@ export function onReceive(units, lines, variants) {
 
 const embedDevice = (d) => {
   const v = [PHONE_VARIANT, CASE_VARIANT, CABLE_VARIANT].find((x) => x.id === d.variant_id) ?? PHONE_VARIANT
-  return { ...d, variant: { id: v.id, sku: v.sku, color: v.color, ram_gb: v.ram_gb, storage_gb: v.storage_gb, mrp: v.mrp, selling_price: v.selling_price, is_active: true, product: v.product } }
+  return { ...d, variant: { id: v.id, sku: v.sku, color: v.color, ram_gb: v.ram_gb, storage_gb: v.storage_gb, mrp: v.mrp, selling_price: v.selling_price, is_active: true, product: v.product }, cost: costs.has(d.id) ? { cost_price: costs.get(d.id) } : null }
 }
 
 // `or` filter values look like (imei1.ilike.*49*,imei2.ilike.*49*,variant_id.in.(a,b)); commas inside () do not split.

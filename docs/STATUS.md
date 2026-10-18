@@ -34,7 +34,7 @@ stayed on the login page with no explanation); both are fixed and covered by tes
 1. ~~Purchasing and receiving~~ (built).
 2. ~~Inventory: devices and accessory stock, adjustments, IMEI correction~~ (built; see "Inventory milestone").
 3. ~~POS: cart, discounts with reason and Admin approval, single payment, `finalize_sale`, invoice view/print~~ (built; see "POS milestone").
-4. Customers, expenses, simple reports.
+4. ~~Customers, expenses, simple reports~~ (built; see "Back-office milestone").
 5. Product specifications and images; website price approval history.
 
 ## Purchasing milestone (branch `feature/purchasing`)
@@ -95,3 +95,15 @@ policy boundary were also run for real against a local Supabase stack (details i
 Known gaps: no returns/voids/refunds; no customer list or edit screen (search and quick-add only); invoice has no shop phone (not snapshotted by the backend); no camera scanning;
 reports and expenses not built; the Manager discount allowance must be configured by an Admin in Settings before Managers can discount without an approval.
 Windows note: Docker Desktop reserves ports 54323-54422, which includes the smoke stand-in's default 54399; run `SMOKE_MOCK_PORT=58421 npm run smoke` (any free port) in that case.
+
+## Back-office milestone (branch `feature/back-office`)
+
+Routes: `/customers`, `/customers/:id`, `/expenses`, `/reports` (both roles), `/audit` (Admin). Contract, rules and gaps: `docs/BACKOFFICE.md`.
+
+Checks: lint, typecheck, unit/component/API tests, build, audit, and a 119-check browser smoke against the stand-in server. The data layer was also run for real against a local Supabase stack
+(customers, expenses, the report queries with exact figures, audit access). The browser screens have NOT been run against real Supabase.
+
+Also fixed: stale caches between modules (a completed sale now refreshes the customer's history and reports; received stock, inventory adjustments and a new POS customer refresh
+Inventory, the POS, reports and the customer list).
+
+Known gaps: no receipts (no Storage policies), no returns/refunds, accessory profit not reported, reports computed in the browser (20,000-row guard).

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createCustomer, searchCustomers } from '../../api/sales'
 import { toAppError } from '../../lib/errors'
 import { useDebounced } from '../../lib/useDebounced'
@@ -9,12 +9,14 @@ import { sanitizeCustomerSearch, validateCustomer, type CustomerForm } from './l
 
 function NewCustomerDialog({ onCreated, onClose }: { onCreated: (c: Customer) => void; onClose: () => void }) {
   const { notify } = useToast()
+  const qc = useQueryClient()
   const [form, setForm] = useState<CustomerForm>({ name: '', phone: '', email: '', address: '' })
   const [errors, setErrors] = useState<ReturnType<typeof validateCustomer>['errors']>({})
   const create = useMutation({
     mutationFn: (v: NonNullable<ReturnType<typeof validateCustomer>['value']>) => createCustomer(v),
     onSuccess: (c) => {
       notify('Customer added')
+      void qc.invalidateQueries({ queryKey: ['customers'] })
       onCreated(c)
     },
     onError: (e) => notify(toAppError(e).message, 'bad'),
