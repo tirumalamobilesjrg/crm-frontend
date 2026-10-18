@@ -24,3 +24,8 @@ export async function loadDashboardCounts(): Promise<DashboardCounts> {
   ])
   return { products, published, devicesInStock, accessorySkus }
 }
+
+/** Draft purchases waiting to be received (head count only). */
+export async function countDraftPurchases(): Promise<number> {
+  return count(supabase.from('purchases').select('id', { count: 'exact' as const, head: true }).eq('status', 'draft'))
+}

@@ -4,7 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#11233b" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Tirumala Mobiles CRM</title>
+    <script>
+      // apply a saved light/dark choice before the first paint (no flash); storage may be blocked
+      try { var t = localStorage.getItem("crm-theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t) } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

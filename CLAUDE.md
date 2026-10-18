@@ -35,7 +35,8 @@ Done (milestone 3, branch `feature/inventory`): Inventory overview/search, devic
 Done (milestone 4, branch `feature/pos`): POS (scan/cart/discount/approval/single payment via `finalize_sale`), sales list, invoice with A4 print, Admin discount approvals. Contract: `docs/POS_API.md`.
 Done (milestone 5, branch `feature/back-office`): customers (list, detail, edit, history, Admin delete), expenses, reports with CSV, Admin audit log. Contract: `docs/BACKOFFICE.md`.
 Done (milestone 6, branch `feature/product-media`): product specifications and photos editor (needs backend migration 0021). Contract: `docs/PRODUCT_MEDIA.md`.
-Next: UI/UX overhaul of the CRM, then the public website. Earlier plan was: POS billing
+Done (milestone 7, branch `feature/ui-redesign`): CRM UI/UX overhaul (design tokens, light/dark theme, grouped nav + phone drawer, dashboard, focus-trapped dialogs). See `docs/UI_DESIGN.md`.
+Next: the public website. Earlier plan was: POS billing
 (cart, discounts with reason/approval, single payment, invoice view, A4 print), then customers/expenses/reports.
 
 ## Gotchas

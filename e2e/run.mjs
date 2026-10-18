@@ -22,6 +22,9 @@ for (let i = 0; i < 40; i++) {
   try { if ((await fetch('http://127.0.0.1:4173/')).ok) break } catch { /* not up yet */ }
   await new Promise((r) => setTimeout(r, 250))
 }
-const code = await wait(run(process.execPath, ['e2e/smoke.mjs']))
+// `npm run smoke` runs the checks; `npm run screenshots` runs the same stand-in server with e2e/screenshots.mjs
+const scriptAt = process.argv.indexOf('--script')
+const script = scriptAt >= 0 ? process.argv[scriptAt + 1] : 'e2e/smoke.mjs'
+const code = await wait(run(process.execPath, [script]))
 children.forEach((c) => c.kill())
 process.exit(code)

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { useAuth } from '../../auth/AuthProvider'
 import { toAppError } from '../../lib/errors'
+import { Icon } from '../../components/icons'
 import { Button, Field } from '../../components/ui'
 
 export function LoginPage() {
@@ -32,28 +33,42 @@ export function LoginPage() {
   }
 
   return (
-    <main className="center-card">
-      <h1>Tirumala Mobiles CRM</h1>
-      <p className="muted">Staff sign in</p>
-      <form onSubmit={(e) => void onSubmit(e)} noValidate>
-        <Field label="Email">
-          {(p) => <input {...p} type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />}
-        </Field>
-        <Field label="Password">
-          {(p) => (
-            <input {...p} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          )}
-        </Field>
-        {error && (
-          <div className="error-box" role="alert">
-            {error}
-          </div>
-        )}
-        <Button type="submit" variant="primary" disabled={busy || !email || !password}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </Button>
-      </form>
-      <p className="muted small">Accounts are created by an Admin. There is no self sign-up.</p>
-    </main>
+    <div className="login-wrap">
+      <section className="login-hero" aria-hidden="true">
+        <div className="brand">
+          <span className="brand-mark">
+            <Icon name="phone" size={18} />
+          </span>
+          <span>Tirumala Mobiles</span>
+        </div>
+        <div>
+          <h2>Sell, stock and close the day from one screen.</h2>
+          <p>Billing, inventory, purchases and reports for the shop counter.</p>
+        </div>
+      </section>
+      <main className="login-panel">
+        <div className="login-card">
+          <h1>Tirumala Mobiles CRM</h1>
+          <p className="muted">Staff sign in</p>
+          <form onSubmit={(e) => void onSubmit(e)} noValidate>
+            <Field label="Email">
+              {(p) => <input {...p} type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />}
+            </Field>
+            <Field label="Password">
+              {(p) => <input {...p} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />}
+            </Field>
+            {error && (
+              <div className="error-box" role="alert">
+                <span>{error}</span>
+              </div>
+            )}
+            <Button type="submit" variant="primary" disabled={busy || !email || !password}>
+              {busy ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+          <p className="muted small">Accounts are created by an Admin. There is no self sign-up.</p>
+        </div>
+      </main>
+    </div>
   )
 }

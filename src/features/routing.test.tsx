@@ -5,6 +5,14 @@ import { readyState, renderApp } from '../test/utils'
 
 vi.mock('../api/dashboard', () => ({
   loadDashboardCounts: vi.fn().mockResolvedValue({ products: 3, published: 2, devicesInStock: 5, accessorySkus: 1 }),
+  countDraftPurchases: vi.fn().mockResolvedValue(0),
+}))
+vi.mock('../api/reports', () => ({ loadInvoices: vi.fn().mockResolvedValue([]) }))
+vi.mock('../api/sales', () => ({ listSales: vi.fn().mockResolvedValue({ rows: [], total: 0 }) }))
+vi.mock('../api/inventory', () => ({
+  listAccessories: vi.fn().mockResolvedValue([]),
+  loadInventorySummary: vi.fn().mockResolvedValue({ inStock: 5, damaged: 0, lost: 0, returnedToSupplier: 0, sold: 0, accessorySkusInStock: 0, accessoryUnits: 0, accessoryUnitsTruncated: false }),
+  PAGE_SIZE: 25,
 }))
 vi.mock('../api/settings', () => ({
   listPolicies: vi.fn().mockResolvedValue([]),
