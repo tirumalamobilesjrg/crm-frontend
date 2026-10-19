@@ -478,6 +478,21 @@ try {
   await page.getByLabel('Period').selectOption('month')
   acceptDialogs = false
 
+  // 3e1. "Add stock" from the product page starts a draft purchase for that variant and opens it
+  await page.goto(BASE + '/catalogue/products/p1')
+  await page.getByRole('button', { name: 'Add stock for NOVA-X1-8-128' }).click()
+  const stockDialog = page.getByRole('dialog', { name: /Add stock/ })
+  await stockDialog.getByRole('button', { name: 'Continue' }).click()
+  check('Add stock validates supplier, invoice number and cost before anything is created', (await stockDialog.getByText('Choose a supplier.').isVisible()) && (await stockDialog.getByText(/Enter the cost per unit/).isVisible()))
+  await stockDialog.getByLabel('Supplier', { exact: true }).selectOption({ label: 'Metro Traders' })
+  await stockDialog.getByLabel('Supplier invoice number').fill('INV-STOCK-1')
+  await stockDialog.getByLabel('Number of phones').fill('2')
+  await stockDialog.getByLabel(/Cost per unit/).fill('14500')
+  await stockDialog.getByRole('button', { name: 'Continue' }).click()
+  await page.getByRole('heading', { name: /INV-STOCK-1/ }).waitFor({ timeout: 5000 })
+  await page.getByLabel(/phone 1 of 2/).waitFor({ timeout: 5000 })
+  check('Add stock opens the draft purchase with this phone as its line and one IMEI box per phone', (await page.getByPlaceholder(/Scan or type/).count()) === 2)
+
   // 3e2. brand logos (manager): gallery suggestion, own upload rules, change and remove, served under the production CSP
   await page.goto(BASE + '/catalogue/setup')
   await page.getByRole('heading', { name: 'Brands & categories' }).waitFor({ timeout: 5000 })

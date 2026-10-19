@@ -8,6 +8,7 @@ import { formatINR } from '../../lib/money'
 import type { Variant } from '../../lib/types'
 import { Badge, Button, Dialog, ErrorBox, Field, Loading, useToast } from '../../components/ui'
 import { validateVariant, type VariantForm } from './validation'
+import { AddStockDialog } from './AddStockDialog'
 import { PhotosSection } from './PhotosSection'
 import { SpecsSection } from './SpecsSection'
 
@@ -136,6 +137,7 @@ export function ProductDetailPage() {
   const [editing, setEditing] = useState<Variant | 'new' | null>(() =>
     isAdmin && (location.state as { addVariant?: boolean } | null)?.addVariant ? 'new' : null,
   )
+  const [stocking, setStocking] = useState<Variant | null>(null)
   const product = useQuery({ queryKey: ['product', id], queryFn: () => getProduct(id) })
   const variants = useQuery({ queryKey: ['variants', id], queryFn: () => listVariants(id) })
 
@@ -201,8 +203,13 @@ export function ProductDetailPage() {
                   <td className="right">{v.public_price === null ? <span className="muted">contact shop</span> : formatINR(v.public_price)}</td>
                   <td>{v.is_active ? <Badge tone="good">Active</Badge> : <Badge tone="warn">Inactive</Badge>}</td>
                   <td className="right">
+                    {v.is_active && (
+                      <Button small variant="primary" aria-label={`Add stock for ${v.sku}`} onClick={() => setStocking(v)}>
+                        Add stock
+                      </Button>
+                    )}{' '}
                     {isAdmin && (
-                      <Button small onClick={() => setEditing(v)}>
+                      <Button small aria-label={`Edit ${v.sku}`} onClick={() => setEditing(v)}>
                         Edit
                       </Button>
                     )}
@@ -215,6 +222,7 @@ export function ProductDetailPage() {
       </section>
       <SpecsSection productId={id} />
       <PhotosSection productId={id} />
+      {stocking && <AddStockDialog variant={stocking} productName={p.name} onClose={() => setStocking(null)} />}
       {editing && <VariantDialog productId={id} variant={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </div>
   )
