@@ -14,9 +14,10 @@ vi.mock('../../api/brandLogos')
 const brand = (over: Partial<Brand> = {}): Brand => ({ id: 'b1', name: 'Samsung', slug: 'samsung', is_active: true, logo_path: null, ...over })
 
 // Loading a gallery logo is a dynamic import, which is slow the first time when the whole suite runs in parallel.
-beforeAll(() => configure({ asyncUtilTimeout: 6000 }))
+vi.setConfig({ testTimeout: 25_000 })
+beforeAll(() => configure({ asyncUtilTimeout: 12000 }))
 afterAll(() => configure({ asyncUtilTimeout: 1000 }))
-const until = (check: () => void) => vi.waitFor(check, { timeout: 6000 })
+const until = (check: () => void) => vi.waitFor(check, { timeout: 12000 })
 
 beforeEach(() => {
   vi.resetAllMocks()
