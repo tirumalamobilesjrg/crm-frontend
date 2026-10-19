@@ -62,16 +62,19 @@ Done (branch fix/review-a11y-confirm-cards): `Tabs` (WAI-ARIA tabs: roving tabin
 Done (branch fix/csp-and-sale-guard): strict Content-Security-Policy in `public/_headers` (`default-src 'self'`; images/connections only to self and `https://*.supabase.co`; no inline scripts or styles, so the theme bootstrap lives in `public/theme-init.js`). The browser smoke serves the build with that same policy (`e2e/vite.preview.config.mjs`), so a blocked resource fails it. If the Supabase project ever moves off `*.supabase.co` (custom domain), update `img-src` and `connect-src`. POS: after a sale attempt ends without a definite answer (no connection / unexpected error), changing the cart and selling again asks "Check Sales first" because the changed sale gets a new idempotency key.
 Still open from the review: an axe/Lighthouse run and a real-phone check.
 
-## Brand logos (branch feature/brand-logos; needs backend migration 0026, branch feature/brand-logos in crm-backend)
+## Brand logos (backend migration 0026, applied to the hosted project)
 Brands & categories: each brand shows a logo tile (or its first letter), the Products list shows it beside the brand, and staff pick one from a curated gallery of 42 brands (`src/assets/brand-logos/*.svg`, sources and licences in `SOURCES.md`; 32 from Simple Icons CC0, 10 public-domain files from Wikimedia Commons, all sanitised: no scripts, styles, links, filters or clipping) or upload their own PNG/WebP (256 KB). The chosen file is copied into the public `brand-logos` bucket (`api/brandLogos.ts`, `brands.logo_path`); the website never loads logos and shows brand names only. Typing a brand name that is exactly a gallery brand preselects its logo. Gallery logic is in `features/catalogue/logoGallery.ts` (a test checks every bundled SVG is safe), UI in `BrandLogos.tsx`. Do not add third-party logo hotlinks (Brandfetch forbids caching/re-hosting). Adding a gallery logo: put a sanitised `<slug>.svg` in the folder, add `{slug,name}` to `brands.json` and a row to `SOURCES.md`.
 
 ## Add stock from the product page (branch fix/add-stock-from-product)
 Each active variant on the product page has an "Add stock" button (Admin and Manager). It opens `AddStockDialog` (supplier, supplier invoice number and date, quantity, cost per unit), creates a draft purchase with that variant as its first line and opens it; phones then get one IMEI box each and "Receive stock" there is what adds them. Stock still only enters through `receive_purchase`, so the ledger and cost rules are unchanged. If the line cannot be added the draft is still opened with an explanation.
 
-## Category pictures (branch feature/category-images; needs backend migration 0027)
+## Category pictures (backend migration 0027, applied to the hosted project)
 Brands & categories: each category has a thumbnail and a "Picture" button (JPEG/PNG/WebP, up to 15 MB picked; shrunk in the browser to about 900 px, at most 1 MiB stored) writing the public `category-images` bucket and `categories.image_path` (`api/categoryImages.ts`, rules in `features/catalogue/categoryImage.ts`, UI in `CategoryPicture.tsx`). The website shows the picture on its category tile. `prepareForUpload(file, maxSide, keepIfSmallerThan)` now takes optional limits. The smoke stand-in (`e2e/mock-brands.mjs`) serves brands, categories and both buckets.
 
-## Item-bound approvals (branch feature/item-bound-approvals-ui; needs backend migration 0025)
+## Link styling (branch fix/link-styling)
+Links are plain (link colour, no underline) and underline on hover or keyboard focus; menus, breadcrumbs ("← Products" use `.back-link`), buttons and table links never carry a permanent underline (table links are semi-bold). Only links inside running text (`p a`, `small a`, `.hint a`) keep a permanent underline so they are not distinguished by colour alone (axe `link-in-text-block`). New back links: `<Link className="back-link" to=...>← Name</Link>`.
+
+## Item-bound approvals (backend migration 0025, applied to the hosted project)
 The Admin picks the phone or accessory (type-to-find) when granting; an approval covers the discount on THAT item only (`approvalAuthority`, `isApprovalItem` in `pos/logic.ts` mirror finalize_sale). The POS lists only approvals whose item is in the cart and shows what each is for (`approvalItemLabel`). Do not release this branch to production before migration 0025 is applied to the hosted database (the new grant_discount_approval arguments do not exist there until then).
 
 ## Accessibility audit

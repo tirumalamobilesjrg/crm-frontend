@@ -148,7 +148,7 @@ export function ProductDetailPage() {
   return (
     <div>
       <p>
-        <Link to="/catalogue/products">← Products</Link>
+        <Link className="back-link" to="/catalogue/products">← Products</Link>
       </p>
       <div className="page-head">
         <h1>{p.name}</h1>

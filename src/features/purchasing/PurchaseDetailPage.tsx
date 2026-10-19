@@ -222,7 +222,7 @@ export function PurchaseDetailPage() {
   return (
     <div>
       <p>
-        <Link to="/purchasing/purchases">← Purchases</Link>
+        <Link className="back-link" to="/purchasing/purchases">← Purchases</Link>
       </p>
       <div className="page-head">
         <h1>Invoice {p.supplier_invoice_no}</h1>

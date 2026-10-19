@@ -27,7 +27,7 @@ export function InvoicePage() {
     <div>
       <div className="no-print">
         <p>
-          <Link to="/sales">← Sales</Link>
+          <Link className="back-link" to="/sales">← Sales</Link>
         </p>
         {justSold && (
           <div className="confirmed" role="status">

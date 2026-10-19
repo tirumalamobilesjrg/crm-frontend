@@ -97,8 +97,14 @@ h1 { font-family: var(--font-display); font-size: 1.85rem; font-weight: 650; let
 h2 { font-size: 1.1rem; font-weight: 650; letter-spacing: -0.005em; margin-bottom: 0.6rem; }
 h3 { font-size: 0.98rem; font-weight: 650; margin: 0.9rem 0 0.35rem; }
 p { margin: 0.4rem 0; max-width: 72ch; }
-a { color: var(--link); text-underline-offset: 2px; }
-a:hover { color: var(--link-hover); }
+a { color: var(--link); text-decoration: none; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover, a:focus-visible { color: var(--link-hover); text-decoration: underline; }
+/* Links in running text keep a permanent underline, so they are not told apart from the words by colour alone.
+   Menus, breadcrumbs, buttons and links in tables stay plain and underline on hover or keyboard focus. */
+p a:not(.btn):not(.back-link), small a, .hint a { text-decoration: underline; }
+.table a:not(.btn) { font-weight: 600; }
+.back-link { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; color: var(--muted); }
+.back-link:hover, .back-link:focus-visible { color: var(--link-hover); }
 :focus-visible { outline: 2px solid transparent; box-shadow: var(--focus); border-radius: var(--radius-s); }
 .muted { color: var(--muted); } .small { font-size: 0.85rem; } .right { text-align: right; }
 .mono { font-family: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace; font-size: 0.92em; letter-spacing: -0.01em; }
