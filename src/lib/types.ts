@@ -18,6 +18,8 @@ export interface Brand {
   name: string
   slug: string
   is_active: boolean
+  /** Object name in the public `brand-logos` bucket, or null when the brand has no logo. */
+  logo_path: string | null
 }
 
 export interface Category {
@@ -40,7 +42,7 @@ export interface Product {
 }
 
 export interface ProductRow extends Product {
-  brand: { name: string } | null
+  brand: { name: string; logo_path?: string | null } | null
   category: { name: string } | null
 }
 

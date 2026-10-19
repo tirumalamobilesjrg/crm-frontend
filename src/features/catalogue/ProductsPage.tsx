@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createProduct, listBrands, listCategories, listProducts, setPublished } from '../../api/catalogue'
 import { productSlug } from '../../lib/slug'
 import { toAppError } from '../../lib/errors'
+import { SavedBrandMark } from './BrandLogos'
 import { Badge, Button, Dialog, ErrorBox, Field, Loading, useConfirm, useToast } from '../../components/ui'
 import { useAuth } from '../../auth/AuthProvider'
 import { validateProduct, type ProductForm } from './validation'
@@ -147,7 +148,14 @@ export function ProductsPage() {
                 <td>
                   <Link to={`/catalogue/products/${p.id}`}>{p.name}</Link>
                 </td>
-                <td>{p.brand?.name}</td>
+                <td>
+                  {p.brand && (
+                    <span className="name-with-mark">
+                      <SavedBrandMark path={p.brand.logo_path ?? null} name={p.brand.name} size={28} />
+                      {p.brand.name}
+                    </span>
+                  )}
+                </td>
                 <td>{p.category?.name}</td>
                 <td>{p.is_published ? <Badge tone="good">Published</Badge> : <Badge>Draft</Badge>}</td>
                 <td className="right">

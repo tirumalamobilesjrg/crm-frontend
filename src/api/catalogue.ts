@@ -3,15 +3,16 @@ import type { Brand, Category, Product, ProductRow, TrackingMode, Variant } from
 import { run, runChange } from './db'
 
 const PRODUCT_COLUMNS =
-  'id, brand_id, category_id, name, slug, description, is_published, published_at, updated_at, brand:brands(name), category:categories(name)'
+  'id, brand_id, category_id, name, slug, description, is_published, published_at, updated_at, brand:brands(name, logo_path), category:categories(name)'
 const VARIANT_COLUMNS =
   'id, product_id, sku, color, ram_gb, storage_gb, mrp, selling_price, public_price, public_price_approved_at, is_active, tracking_mode'
 
-export const listBrands = () => run<Brand[]>(supabase.from('brands').select('id, name, slug, is_active').order('name'))
+export const listBrands = () => run<Brand[]>(supabase.from('brands').select('id, name, slug, is_active, logo_path').order('name'))
 export const listCategories = () =>
   run<Category[]>(supabase.from('categories').select('id, name, slug, is_active').order('name'))
 
-export const createBrand = (input: { name: string; slug: string }) => run(supabase.from('brands').insert(input))
+export const createBrand = (input: { name: string; slug: string }) =>
+  run<Brand>(supabase.from('brands').insert(input).select('id, name, slug, is_active, logo_path').single())
 export const createCategory = (input: { name: string; slug: string }) => run(supabase.from('categories').insert(input))
 export const setBrandActive = (id: string, is_active: boolean) =>
   runChange(supabase.from('brands').update({ is_active }).eq('id', id).select('id'))

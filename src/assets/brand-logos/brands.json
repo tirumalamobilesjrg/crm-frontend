@@ -1,0 +1,170 @@
+[
+ {
+  "slug": "acer",
+  "name": "Acer"
+ },
+ {
+  "slug": "apple",
+  "name": "Apple"
+ },
+ {
+  "slug": "asus",
+  "name": "ASUS"
+ },
+ {
+  "slug": "beats",
+  "name": "Beats"
+ },
+ {
+  "slug": "blackberry",
+  "name": "BlackBerry"
+ },
+ {
+  "slug": "boat",
+  "name": "boAt"
+ },
+ {
+  "slug": "bose",
+  "name": "Bose"
+ },
+ {
+  "slug": "dell",
+  "name": "Dell"
+ },
+ {
+  "slug": "fitbit",
+  "name": "Fitbit"
+ },
+ {
+  "slug": "garmin",
+  "name": "Garmin"
+ },
+ {
+  "slug": "google",
+  "name": "Google"
+ },
+ {
+  "slug": "honor",
+  "name": "Honor"
+ },
+ {
+  "slug": "hp",
+  "name": "HP"
+ },
+ {
+  "slug": "htc",
+  "name": "HTC"
+ },
+ {
+  "slug": "huawei",
+  "name": "Huawei"
+ },
+ {
+  "slug": "infinix",
+  "name": "Infinix"
+ },
+ {
+  "slug": "intel",
+  "name": "Intel"
+ },
+ {
+  "slug": "iqoo",
+  "name": "iQOO"
+ },
+ {
+  "slug": "itel",
+  "name": "itel"
+ },
+ {
+  "slug": "jbl",
+  "name": "JBL"
+ },
+ {
+  "slug": "lava",
+  "name": "Lava"
+ },
+ {
+  "slug": "lenovo",
+  "name": "Lenovo"
+ },
+ {
+  "slug": "lg",
+  "name": "LG"
+ },
+ {
+  "slug": "micromax",
+  "name": "Micromax"
+ },
+ {
+  "slug": "motorola",
+  "name": "Motorola"
+ },
+ {
+  "slug": "nokia",
+  "name": "Nokia"
+ },
+ {
+  "slug": "nothing",
+  "name": "Nothing"
+ },
+ {
+  "slug": "oneplus",
+  "name": "OnePlus"
+ },
+ {
+  "slug": "oppo",
+  "name": "OPPO"
+ },
+ {
+  "slug": "panasonic",
+  "name": "Panasonic"
+ },
+ {
+  "slug": "poco",
+  "name": "POCO"
+ },
+ {
+  "slug": "realme",
+  "name": "realme"
+ },
+ {
+  "slug": "redmi",
+  "name": "Redmi"
+ },
+ {
+  "slug": "samsung",
+  "name": "Samsung"
+ },
+ {
+  "slug": "seagate",
+  "name": "Seagate"
+ },
+ {
+  "slug": "sennheiser",
+  "name": "Sennheiser"
+ },
+ {
+  "slug": "sony",
+  "name": "Sony"
+ },
+ {
+  "slug": "tecno",
+  "name": "Tecno"
+ },
+ {
+  "slug": "toshiba",
+  "name": "Toshiba"
+ },
+ {
+  "slug": "tplink",
+  "name": "TP-Link"
+ },
+ {
+  "slug": "vivo",
+  "name": "vivo"
+ },
+ {
+  "slug": "xiaomi",
+  "name": "Xiaomi"
+ }
+]

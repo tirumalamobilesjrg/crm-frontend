@@ -356,3 +356,14 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .skip-link:focus { left: 0; }
 main:focus { outline: none; }
 @media print { .skip-link, .no-print { display: none !important; } }
+
+/* ---- brand logos: a white tile holds the logo so dark and colour logos read on both themes ---- */
+.brand-mark { display: inline-flex; align-items: center; justify-content: center; flex: none; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-s); padding: 4px; overflow: hidden; }
+.brand-mark img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.brand-mark-initial { color: #46506a; font-weight: 700; font-size: 0.9rem; }
+.name-with-mark { display: inline-flex; align-items: center; gap: 0.6rem; }
+.logo-trigger { display: inline-flex; align-items: center; gap: 0.5rem; }
+.label-like { font-weight: 600; font-size: 0.9rem; }
+.logo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 0.5rem; max-height: 46vh; overflow: auto; margin: 0.25rem 0 1rem; padding: 2px; }
+.logo-option { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 0.55rem 0.3rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); cursor: pointer; font: inherit; color: var(--text); font-size: 0.82rem; }
+.logo-option:hover { border-color: var(--link); background: var(--primary-soft); }

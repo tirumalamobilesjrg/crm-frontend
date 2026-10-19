@@ -9,6 +9,7 @@ import { handleInventory, onReceive, forceStatus, PHONE_VARIANT, CASE_VARIANT } 
 import { handleSales, setFailNext, finalizeLog } from './mock-sales.mjs'
 import { handleBackOffice } from './mock-backoffice.mjs'
 import { handleMedia, handleMediaPublic } from './mock-media.mjs'
+import { handleBrandLogosPublic, handleBrands } from './mock-brands.mjs'
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const jwt = (sub) => `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`
 const USERS = {
@@ -88,6 +89,7 @@ const server = http.createServer((req, res) => {
       const u = byId(sub); return u ? json(200, { id: u.id, aud: 'authenticated', role: 'authenticated', email: 'x' }) : json(401, { msg: 'bad' })
     }
     if (handleMediaPublic({ url, res })) return // public photos need no login
+    if (handleBrandLogosPublic({ url, res })) return // public brand logos too
     const table = url.pathname.replace('/rest/v1/', '')
     const wantsObject = (req.headers.accept ?? '').includes('vnd.pgrst.object')
     const returnsRows = (req.headers.prefer ?? '').includes('return=representation')
@@ -99,6 +101,7 @@ const server = http.createServer((req, res) => {
     if (handleBackOffice({ table, req, url, payload, json, res, wantsObject, returnsRows, me })) return
     if (handleSales({ table, req, url, payload, json, res, wantsObject, returnsRows, me })) return
     if (handleMedia({ table, req, url, raw, payload, json, res, wantsObject, returnsRows, me })) return
+    if (handleBrands({ table, req, url, raw, payload, json, res, wantsObject, returnsRows })) return
     if (req.method === 'HEAD') return res.writeHead(200, { 'Content-Range': '0-0/5' }).end()
 
     if (table === 'staff_profiles') {
