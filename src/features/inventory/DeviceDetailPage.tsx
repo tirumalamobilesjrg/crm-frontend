@@ -191,7 +191,7 @@ export function DeviceDetailPage() {
   return (
     <div>
       <p>
-        <Link to="/inventory">← Inventory</Link>
+        <Link className="back-link" to="/inventory">← Inventory</Link>
       </p>
       <div className="page-head">
         <h1>{variantTitle(d.variant)}</h1>

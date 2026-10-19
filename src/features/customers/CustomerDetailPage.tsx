@@ -38,7 +38,7 @@ export function CustomerDetailPage() {
   return (
     <div>
       <p>
-        <Link to="/customers">← Customers</Link>
+        <Link className="back-link" to="/customers">← Customers</Link>
       </p>
       <div className="page-head">
         <h1>{c.name}</h1>

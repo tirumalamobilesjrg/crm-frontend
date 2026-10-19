@@ -68,6 +68,9 @@ Brands & categories: each brand shows a logo tile (or its first letter), the Pro
 ## Add stock from the product page (branch fix/add-stock-from-product)
 Each active variant on the product page has an "Add stock" button (Admin and Manager). It opens `AddStockDialog` (supplier, supplier invoice number and date, quantity, cost per unit), creates a draft purchase with that variant as its first line and opens it; phones then get one IMEI box each and "Receive stock" there is what adds them. Stock still only enters through `receive_purchase`, so the ledger and cost rules are unchanged. If the line cannot be added the draft is still opened with an explanation.
 
+## Link styling (branch fix/link-styling)
+Links are plain (link colour, no underline) and underline on hover or keyboard focus; menus, breadcrumbs ("← Products" use `.back-link`), buttons and table links never carry a permanent underline (table links are semi-bold). Only links inside running text (`p a`, `small a`, `.hint a`) keep a permanent underline so they are not distinguished by colour alone (axe `link-in-text-block`). New back links: `<Link className="back-link" to=...>← Name</Link>`.
+
 ## Item-bound approvals (branch feature/item-bound-approvals-ui; needs backend migration 0025)
 The Admin picks the phone or accessory (type-to-find) when granting; an approval covers the discount on THAT item only (`approvalAuthority`, `isApprovalItem` in `pos/logic.ts` mirror finalize_sale). The POS lists only approvals whose item is in the cart and shows what each is for (`approvalItemLabel`). Do not release this branch to production before migration 0025 is applied to the hosted database (the new grant_discount_approval arguments do not exist there until then).
 

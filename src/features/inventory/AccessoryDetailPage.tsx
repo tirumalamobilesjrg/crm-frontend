@@ -121,7 +121,7 @@ export function AccessoryDetailPage() {
   return (
     <div>
       <p>
-        <Link to="/inventory?tab=accessories">← Inventory</Link>
+        <Link className="back-link" to="/inventory?tab=accessories">← Inventory</Link>
       </p>
       <div className="page-head">
         <h1>{variantTitle(a)}</h1>
