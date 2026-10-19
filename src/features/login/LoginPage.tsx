@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { useAuth } from '../../auth/AuthProvider'
 import { toAppError } from '../../lib/errors'
-import { Icon } from '../../components/icons'
 import { Button, Field } from '../../components/ui'
 
 export function LoginPage() {
@@ -36,9 +35,7 @@ export function LoginPage() {
     <div className="login-wrap">
       <section className="login-hero" aria-hidden="true">
         <div className="brand">
-          <span className="brand-mark">
-            <Icon name="phone" size={18} />
-          </span>
+          <img className="brand-logo" src="/logo-192.png" alt="" width={48} height={48} />
           <span>Tirumala Mobiles</span>
         </div>
         <div>

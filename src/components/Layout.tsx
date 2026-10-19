@@ -68,9 +68,7 @@ export function Layout() {
       <div className="scrim" data-open={open} onClick={() => setOpen(false)} aria-hidden="true" />
       <aside className="sidebar" id="main-nav" data-open={open} ref={rail}>
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            <Icon name="phone" size={18} />
-          </span>
+          <img className="brand-logo" src="/logo-64.png" alt="" width={32} height={32} />
           <span>Tirumala Mobiles</span>
           <button className="icon-btn drawer-close" aria-label="Close menu" onClick={() => setOpen(false)}>
             <Icon name="close" size={20} />
