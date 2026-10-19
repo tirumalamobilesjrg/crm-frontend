@@ -526,6 +526,25 @@ try {
   check('removing a logo shows the brand initial again', (await brandsPanel.getByRole('row', { name: /realme/ }).locator('img').count()) === 0)
   await page.screenshot({ path: 'e2e/out/shot-brands.png' })
 
+  // 3e3. category pictures (manager): upload, shown from the public bucket, rules, remove
+  const categoriesPanel = page.locator('section.panel').filter({ has: page.getByRole('heading', { name: 'Categories', exact: true }) })
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+  await categoriesPanel.getByRole('button', { name: 'Picture for Accessories' }).click()
+  await page.getByLabel(/Choose a picture/).setInputFiles({ name: 'cat.gif', mimeType: 'image/gif', buffer: Buffer.from('x') })
+  check('a GIF category picture is refused with a clear message', await page.getByRole('dialog').getByRole('alert').getByText(/JPEG, PNG or WebP/).isVisible())
+  await page.getByLabel(/Choose a picture/).setInputFiles({ name: 'cat.png', mimeType: 'image/png', buffer: png })
+  await page.getByText('Picture saved').waitFor({ timeout: 5000 })
+  await page.waitForFunction(() => {
+    const row = [...document.querySelectorAll('tr')].find((r) => r.textContent?.includes('Accessories'))
+    const img = row?.querySelector('img')
+    return Boolean(img && img.complete && img.naturalWidth > 0)
+  }, null, { timeout: 5000 })
+  check('a category picture is saved and shown from the public bucket', true)
+  await categoriesPanel.getByRole('button', { name: 'Picture for Accessories' }).click()
+  await page.getByRole('button', { name: 'Remove picture' }).click()
+  await page.getByText('Picture removed').waitFor({ timeout: 5000 })
+  check('removing a category picture shows the initial again', (await categoriesPanel.getByRole('row', { name: /Accessories/ }).locator('img').count()) === 0)
+
   // 3f. product specifications and photos (manager)
   await page.getByRole('link', { name: 'Products', exact: true }).click()
   await page.getByRole('link', { name: 'Nova X1' }).click()

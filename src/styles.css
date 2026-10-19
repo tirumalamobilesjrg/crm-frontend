@@ -369,3 +369,10 @@ main:focus { outline: none; }
 .logo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 0.5rem; max-height: 46vh; overflow: auto; margin: 0.25rem 0 1rem; padding: 2px; }
 .logo-option { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 0.55rem 0.3rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); cursor: pointer; font: inherit; color: var(--text); font-size: 0.82rem; }
 .logo-option:hover { border-color: var(--link); background: var(--primary-soft); }
+
+/* category pictures */
+.category-thumb { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 56px; height: 40px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-s); overflow: hidden; }
+.category-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.category-preview { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+.category-preview .category-thumb { width: 120px; height: 84px; }
+.category-preview p { margin: 0; }

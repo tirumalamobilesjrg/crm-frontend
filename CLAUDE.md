@@ -68,6 +68,9 @@ Brands & categories: each brand shows a logo tile (or its first letter), the Pro
 ## Add stock from the product page (branch fix/add-stock-from-product)
 Each active variant on the product page has an "Add stock" button (Admin and Manager). It opens `AddStockDialog` (supplier, supplier invoice number and date, quantity, cost per unit), creates a draft purchase with that variant as its first line and opens it; phones then get one IMEI box each and "Receive stock" there is what adds them. Stock still only enters through `receive_purchase`, so the ledger and cost rules are unchanged. If the line cannot be added the draft is still opened with an explanation.
 
+## Category pictures (branch feature/category-images; needs backend migration 0027)
+Brands & categories: each category has a thumbnail and a "Picture" button (JPEG/PNG/WebP, up to 15 MB picked; shrunk in the browser to about 900 px, at most 1 MiB stored) writing the public `category-images` bucket and `categories.image_path` (`api/categoryImages.ts`, rules in `features/catalogue/categoryImage.ts`, UI in `CategoryPicture.tsx`). The website shows the picture on its category tile. `prepareForUpload(file, maxSide, keepIfSmallerThan)` now takes optional limits. The smoke stand-in (`e2e/mock-brands.mjs`) serves brands, categories and both buckets.
+
 ## Item-bound approvals (branch feature/item-bound-approvals-ui; needs backend migration 0025)
 The Admin picks the phone or accessory (type-to-find) when granting; an approval covers the discount on THAT item only (`approvalAuthority`, `isApprovalItem` in `pos/logic.ts` mirror finalize_sale). The POS lists only approvals whose item is in the cart and shows what each is for (`approvalItemLabel`). Do not release this branch to production before migration 0025 is applied to the hosted database (the new grant_discount_approval arguments do not exist there until then).
 

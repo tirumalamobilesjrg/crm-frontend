@@ -19,13 +19,13 @@ const baseName = (name: string) => name.replace(/\.[^./\\]+$/, '') || 'photo'
  * Returns a smaller WebP (or JPEG) copy when that helps, otherwise the original file. Never throws: if the browser
  * cannot decode or encode the image, the original is returned and the normal size check decides.
  */
-export async function prepareForUpload(file: File): Promise<File> {
+export async function prepareForUpload(file: File, maxSide = MAX_SIDE, keepIfSmallerThan = KEEP_IF_SMALLER_THAN): Promise<File> {
   try {
     if (typeof createImageBitmap !== 'function' || typeof document === 'undefined') return file
     const bitmap = await createImageBitmap(file)
-    const { width, height } = targetSize(bitmap.width, bitmap.height)
+    const { width, height } = targetSize(bitmap.width, bitmap.height, maxSide)
     const scaled = width !== bitmap.width
-    if (!scaled && file.size <= KEEP_IF_SMALLER_THAN) {
+    if (!scaled && file.size <= keepIfSmallerThan) {
       bitmap.close()
       return file
     }

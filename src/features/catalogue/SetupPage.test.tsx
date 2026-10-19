@@ -5,11 +5,13 @@ import { SetupPage } from './SetupPage'
 import { autoConfirm, readyState, renderApp } from '../../test/utils'
 import * as api from '../../api/catalogue'
 import * as logos from '../../api/brandLogos'
+import * as pictures from '../../api/categoryImages'
 import { AppError } from '../../lib/errors'
 import type { Brand } from '../../lib/types'
 
 vi.mock('../../api/catalogue')
 vi.mock('../../api/brandLogos')
+vi.mock('../../api/categoryImages')
 
 const brand = (over: Partial<Brand> = {}): Brand => ({ id: 'b1', name: 'Samsung', slug: 'samsung', is_active: true, logo_path: null, ...over })
 
@@ -23,11 +25,14 @@ beforeEach(() => {
   vi.resetAllMocks()
   autoConfirm()
   vi.mocked(api.listBrands).mockResolvedValue([brand({ logo_path: 'brands/samsung/a.svg' }), brand({ id: 'b2', name: 'Zed', slug: 'zed' })])
-  vi.mocked(api.listCategories).mockResolvedValue([{ id: 'c1', name: 'Phones', slug: 'phones', is_active: true }])
+  vi.mocked(api.listCategories).mockResolvedValue([{ id: 'c1', name: 'Phones', slug: 'phones', is_active: true, image_path: 'categories/phones/a.webp' }, { id: 'c2', name: 'Cases', slug: 'cases', is_active: true, image_path: null }])
   vi.mocked(api.createBrand).mockImplementation(async (i) => brand({ id: 'new', name: i.name, slug: i.slug }) as never)
   vi.mocked(logos.brandLogoUrl).mockImplementation((p) => `https://x.supabase.co/${p}`)
   vi.mocked(logos.saveBrandLogo).mockResolvedValue('brands/x/y.svg')
   vi.mocked(logos.removeBrandLogo).mockResolvedValue(undefined)
+  vi.mocked(pictures.categoryImageUrl).mockImplementation((p) => `https://x.supabase.co/cat/${p}`)
+  vi.mocked(pictures.saveCategoryImage).mockResolvedValue('categories/x/y.webp')
+  vi.mocked(pictures.removeCategoryImage).mockResolvedValue(undefined)
 })
 
 const show = () => renderApp(<SetupPage />, { state: readyState('manager') })
@@ -145,5 +150,45 @@ describe('Brands & categories: logos', () => {
     finish('brands/realme/x.svg')
     expect(await screen.findByText('Brand added')).toBeInTheDocument()
     expect(field).toHaveValue('Tecno')
+  })
+
+  it('shows each category with its picture (or its first letter) and a Picture button; brands get no picture button', async () => {
+    show()
+    const phones = (await screen.findByText('Phones')).closest('tr')!
+    expect(phones.querySelector('img')).toHaveAttribute('src', 'https://x.supabase.co/cat/categories/phones/a.webp')
+    const cases = screen.getByText('Cases').closest('tr')!
+    expect(cases.querySelector('img')).toBeNull()
+    expect(within(cases).getByText('C')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Picture for / })).toHaveLength(2)
+  })
+
+  it('chooses a picture for a category, refuses a GIF, and removes a picture', async () => {
+    const user = userEvent.setup()
+    show()
+    await user.click(await screen.findByRole('button', { name: 'Picture for Cases' }))
+    expect(screen.queryByRole('button', { name: 'Remove picture' })).not.toBeInTheDocument()
+    const input = screen.getByLabelText(/Choose a picture/)
+    await userEvent.setup({ applyAccept: false }).upload(input, new File([new Uint8Array(10)], 'a.gif', { type: 'image/gif' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/JPEG, PNG or WebP/)
+    expect(pictures.saveCategoryImage).not.toHaveBeenCalled()
+    await user.upload(input, new File([new Uint8Array(10)], 'a.webp', { type: 'image/webp' }))
+    await until(() => expect(pictures.saveCategoryImage).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(pictures.saveCategoryImage).mock.calls[0]![0]).toEqual({ id: 'c2', slug: 'cases', image_path: null })
+    expect(await screen.findByText('Picture saved')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Picture for Phones' }))
+    await user.click(screen.getByRole('button', { name: 'Remove picture' }))
+    await until(() => expect(pictures.removeCategoryImage).toHaveBeenCalledWith({ id: 'c1', slug: 'phones', image_path: 'categories/phones/a.webp' }))
+    expect(await screen.findByText('Picture removed')).toBeInTheDocument()
+  })
+
+  it('shows the reason when a picture cannot be saved and keeps the dialog open', async () => {
+    vi.mocked(pictures.saveCategoryImage).mockRejectedValue(new AppError('That picture is still larger than 1 MB after shrinking.', 'invalid_picture'))
+    const user = userEvent.setup()
+    show()
+    await user.click(await screen.findByRole('button', { name: 'Picture for Cases' }))
+    await user.upload(screen.getByLabelText(/Choose a picture/), new File([new Uint8Array(10)], 'a.png', { type: 'image/png' }))
+    expect(await screen.findByText(/still larger than 1 MB/)).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 })

@@ -2,11 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createBrand, createCategory, listBrands, listCategories, setBrandActive, setCategoryActive } from '../../api/catalogue'
 import { removeBrandLogo, saveBrandLogo } from '../../api/brandLogos'
+import { removeCategoryImage, saveCategoryImage } from '../../api/categoryImages'
 import { slugify } from '../../lib/slug'
 import { toAppError } from '../../lib/errors'
 import { Badge, Button, ErrorBox, Field, Loading, useToast } from '../../components/ui'
 import { choiceToFile, suggestLogo, type LogoChoice } from './logoGallery'
 import { ChoiceMark, LogoPickerDialog, SavedBrandMark } from './BrandLogos'
+import { CategoryPictureDialog, CategoryThumb } from './CategoryPicture'
 
 interface Named {
   id: string
@@ -14,6 +16,7 @@ interface Named {
   slug: string
   is_active: boolean
   logo_path?: string | null
+  image_path?: string | null
 }
 
 /** Which logo dialog is open: the one in the "new brand" form, or the one for a saved brand. */
@@ -27,12 +30,15 @@ function Section(props: {
   toggle: (id: string, active: boolean) => Promise<unknown>
   /** Brands only: show logos and let staff choose them. */
   logos?: boolean
+  /** Categories only: show pictures and let staff choose them. */
+  pictures?: boolean
 }) {
   const qc = useQueryClient()
   const { notify } = useToast()
   const [name, setName] = useState('')
   const [choice, setChoice] = useState<LogoChoice | 'none' | null>(null) // null = follow the suggestion for the typed name
   const [picking, setPicking] = useState<Picking>(null)
+  const [picturing, setPicturing] = useState<Named | null>(null)
   const suggestion = props.logos ? suggestLogo(name) : undefined
   const logoForNew: LogoChoice | null = choice === 'none' ? null : choice ?? (suggestion ? { kind: 'curated', logo: suggestion } : null)
   const list = useQuery({ queryKey: [props.queryKey], queryFn: props.load })
@@ -73,6 +79,20 @@ function Section(props: {
     onSuccess: (_d, v) => {
       setPicking(null)
       notify(v.choice ? 'Logo saved' : 'Logo removed')
+      void qc.invalidateQueries({ queryKey: [props.queryKey] })
+    },
+    onError: (e) => notify(toAppError(e).message, 'bad'),
+  })
+
+  const setPicture = useMutation({
+    mutationFn: async (v: { category: Named; file: File | null }) => {
+      const c = { id: v.category.id, slug: v.category.slug, image_path: v.category.image_path ?? null }
+      if (v.file) await saveCategoryImage(c, v.file, crypto.randomUUID())
+      else await removeCategoryImage(c)
+    },
+    onSuccess: (_d, v) => {
+      setPicturing(null)
+      notify(v.file ? 'Picture saved' : 'Picture removed')
       void qc.invalidateQueries({ queryKey: [props.queryKey] })
     },
     onError: (e) => notify(toAppError(e).message, 'bad'),
@@ -131,12 +151,24 @@ function Section(props: {
                       <SavedBrandMark path={r.logo_path ?? null} name={r.name} />
                       {r.name}
                     </span>
+                  ) : props.pictures ? (
+                    <span className="name-with-mark">
+                      <CategoryThumb path={r.image_path ?? null} name={r.name} />
+                      {r.name}
+                    </span>
                   ) : (
                     r.name
                   )}
                 </td>
                 <td>{r.is_active ? <Badge tone="good">Active</Badge> : <Badge tone="warn">Hidden</Badge>}</td>
                 <td className="right">
+                  {props.pictures && (
+                    <>
+                      <Button small aria-label={`Picture for ${r.name}`} onClick={() => setPicturing(r)}>
+                        Picture
+                      </Button>{' '}
+                    </>
+                  )}
                   {props.logos && (
                     <>
                       <Button small aria-label={`Logo for ${r.name}`} onClick={() => setPicking(r)}>
@@ -168,6 +200,16 @@ function Section(props: {
           onClose={() => setPicking(null)}
         />
       )}
+      {picturing && (
+        <CategoryPictureDialog
+          name={picturing.name}
+          path={picturing.image_path ?? null}
+          busy={setPicture.isPending}
+          onChoose={(file) => setPicture.mutate({ category: picturing, file })}
+          onRemove={() => setPicture.mutate({ category: picturing, file: null })}
+          onClose={() => setPicturing(null)}
+        />
+      )}
       {picking && picking !== 'new' && (
         <LogoPickerDialog
           brandName={picking.name}
@@ -188,7 +230,7 @@ export function SetupPage() {
       <p className="muted">Hiding a brand or category also hides its products from the public website.</p>
       <div className="two-col">
         <Section title="Brands" queryKey="brands" load={listBrands} create={createBrand} toggle={setBrandActive} logos />
-        <Section title="Categories" queryKey="categories" load={listCategories} create={createCategory} toggle={setCategoryActive} />
+        <Section title="Categories" queryKey="categories" load={listCategories} create={createCategory} toggle={setCategoryActive} pictures />
       </div>
     </div>
   )

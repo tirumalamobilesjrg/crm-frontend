@@ -27,6 +27,8 @@ export interface Category {
   name: string
   slug: string
   is_active: boolean
+  /** Object name in the public `category-images` bucket, or null when the category has no picture. */
+  image_path: string | null
 }
 
 export interface Product {

@@ -9,7 +9,7 @@ const VARIANT_COLUMNS =
 
 export const listBrands = () => run<Brand[]>(supabase.from('brands').select('id, name, slug, is_active, logo_path').order('name'))
 export const listCategories = () =>
-  run<Category[]>(supabase.from('categories').select('id, name, slug, is_active').order('name'))
+  run<Category[]>(supabase.from('categories').select('id, name, slug, is_active, image_path').order('name'))
 
 export const createBrand = (input: { name: string; slug: string }) =>
   run<Brand>(supabase.from('brands').insert(input).select('id, name, slug, is_active, logo_path').single())
