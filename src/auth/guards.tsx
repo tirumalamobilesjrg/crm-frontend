@@ -1,14 +1,14 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useAuth } from './AuthProvider'
 import type { StaffRole } from '../lib/types'
-import { Loading } from '../components/ui'
+import { PageLoader } from '../components/ui'
 
 /** Everything inside requires a signed-in, active staff member. Role checks here are UX only; the database enforces them. */
 export function RequireAuth() {
   const { state, signOut } = useAuth()
   const location = useLocation()
 
-  if (state.status === 'loading') return <Loading label="Checking your session…" />
+  if (state.status === 'loading') return <PageLoader label="Checking your session…" />
   if (state.status === 'signedOut') return <Navigate to="/login" replace state={{ from: location.pathname }} />
   if (state.status === 'noAccess') {
     return (

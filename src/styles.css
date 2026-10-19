@@ -96,7 +96,11 @@ a:hover { color: var(--primary-hover); }
 
 /* ---- shell: grouped rail + content ---- */
 .shell { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: 100vh; }
-.sidebar { background: var(--sidebar); color: var(--sidebar-text); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sidebar { background: var(--sidebar); color: var(--sidebar-text); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.32); background-clip: content-box; }
 .brand { display: flex; align-items: center; gap: 0.6rem; padding: 1.1rem 1.1rem 0.9rem; font-family: var(--font-display); font-weight: 650; font-size: 1.08rem; color: var(--sidebar-strong); }
 .brand-logo { width: 32px; height: 32px; border-radius: 50%; flex: none; }
 .login-hero .brand-logo { width: 56px; height: 56px; }
@@ -295,3 +299,12 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
+
+/* branded page loader: emblem inside a turning gold ring */
+.page-loader { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 1rem; background: var(--paper); color: var(--muted); }
+.loader-mark { position: relative; display: grid; place-items: center; width: 96px; height: 96px; }
+.loader-mark img { width: 64px; height: 64px; border-radius: 50%; }
+.loader-mark::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--primary) 22%, transparent); border-top-color: var(--primary); animation: spin 0.9s linear infinite; }
+.loader-label { font-weight: 600; letter-spacing: 0.01em; }
+.btn-primary .spinner { border-color: rgba(12, 24, 48, 0.25); border-top-color: var(--primary-text); margin-right: 0.5rem; }
+@media (prefers-reduced-motion: reduce) { .loader-mark::before { animation-duration: 3s; } }

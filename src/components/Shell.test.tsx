@@ -73,7 +73,7 @@ describe('phone drawer', () => {
     await user.keyboard('{Escape}')
     expect(rail).toHaveAttribute('data-open', 'false')
     expect(menu).toHaveFocus()
-  })
+  }, 20_000) // 40 simulated Tab presses are slow when the whole suite runs in parallel
 
   it('closes when a page is chosen', async () => {
     const user = userEvent.setup()

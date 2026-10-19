@@ -39,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
     const apply = (session: Session | null) => {
+      // A new sign-in fetches the staff profile next: say so (a refresh of an already-ready session must not flash a loader).
+      if (session) setState((prev) => (prev.status === 'signedOut' ? { status: 'loading' } : prev))
       void loadState(session).then((next) => {
         if (!cancelled) setState(next)
       })

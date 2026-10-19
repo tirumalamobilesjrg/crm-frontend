@@ -24,9 +24,9 @@ export function LoginPage() {
     setBusy(true)
     try {
       await signIn(email, password)
+      // Stay busy on success: this page redirects as soon as the staff profile has loaded.
     } catch (err) {
       setError(toAppError(err).message)
-    } finally {
       setBusy(false)
     }
   }
@@ -49,17 +49,18 @@ export function LoginPage() {
           <p className="muted">Staff sign in</p>
           <form onSubmit={(e) => void onSubmit(e)} noValidate>
             <Field label="Email">
-              {(p) => <input {...p} type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />}
+              {(p) => <input {...p} type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={busy} />}
             </Field>
             <Field label="Password">
-              {(p) => <input {...p} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />}
+              {(p) => <input {...p} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={busy} />}
             </Field>
             {error && (
               <div className="error-box" role="alert">
                 <span>{error}</span>
               </div>
             )}
-            <Button type="submit" variant="primary" disabled={busy || !email || !password}>
+            <Button type="submit" variant="primary" disabled={busy || !email || !password} aria-busy={busy}>
+              {busy && <span className="spinner" aria-hidden="true" />}
               {busy ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>

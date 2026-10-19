@@ -8,3 +8,9 @@
 [build.environment]
   NODE_VERSION = "24"
   NPM_FLAGS = "--legacy-peer-deps=false"
+
+# Single-page app: every path (a refresh on /pos, /inventory ...) must serve index.html, or the host shows its own "Page not found".
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -13,6 +13,18 @@ export function Loading({ label = 'Loading…' }: { label?: string }) {
   )
 }
 
+/** Full-area branded loader: the shop emblem inside a turning gold ring. Used while the session is being checked. */
+export function PageLoader({ label = 'Loading…' }: { label?: string }) {
+  return (
+    <div className="page-loader" role="status">
+      <span className="loader-mark" aria-hidden="true">
+        <img src="/logo-192.png" alt="" width={64} height={64} />
+      </span>
+      <span className="loader-label">{label}</span>
+    </div>
+  )
+}
+
 /** A block of grey bars where content will appear (decorative; pair with a Loading status for screen readers). */
 export function Skeleton({ lines = 3 }: { lines?: number }) {
   return (

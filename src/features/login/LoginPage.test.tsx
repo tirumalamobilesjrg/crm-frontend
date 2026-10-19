@@ -27,3 +27,20 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeDisabled()
   })
 })
+
+describe('LoginPage while signing in', () => {
+  it('shows a spinner and locks the form from the click until the redirect, even after sign-in succeeded', async () => {
+    const signIn = vi.fn().mockResolvedValue(undefined) // the profile is still loading: the page stays until state turns ready
+    renderApp(<LoginPage />, { state: { status: 'signedOut' }, signIn })
+    const user = userEvent.setup()
+    await user.type(screen.getByLabelText('Email'), 'a@b.co')
+    await user.type(screen.getByLabelText('Password'), 'right')
+    await user.click(screen.getByRole('button', { name: 'Sign in' }))
+    const busy = await screen.findByRole('button', { name: 'Signing in…' })
+    expect(busy).toBeDisabled()
+    expect(busy).toHaveAttribute('aria-busy', 'true')
+    expect(busy.querySelector('.spinner')).not.toBeNull()
+    expect(screen.getByLabelText('Email')).toBeDisabled()
+    expect(screen.getByLabelText('Password')).toBeDisabled()
+  })
+})
