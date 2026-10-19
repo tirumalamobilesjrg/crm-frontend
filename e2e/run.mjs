@@ -16,7 +16,7 @@ if (build !== 0) process.exit(build)
 // The preview server is started with node directly: killing an npx.cmd wrapper on Windows would leave the real server running.
 const children = [
   run(process.execPath, ['e2e/mock-supabase.mjs'], { stdio: 'ignore' }),
-  run(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--outDir', OUT, '--port', '4173', '--host', '127.0.0.1'], { stdio: 'ignore' }),
+  run(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--config', 'e2e/vite.preview.config.mjs', '--outDir', OUT, '--port', '4173', '--host', '127.0.0.1'], { stdio: 'ignore' }),
 ]
 for (let i = 0; i < 40; i++) {
   try { if ((await fetch('http://127.0.0.1:4173/')).ok) break } catch { /* not up yet */ }

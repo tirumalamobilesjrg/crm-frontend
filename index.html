@@ -8,10 +8,7 @@
     <link rel="icon" type="image/png" href="/logo-64.png" />
     <link rel="apple-touch-icon" href="/logo-192.png" />
     <title>Tirumala Mobiles CRM</title>
-    <script>
-      // apply a saved light/dark choice before the first paint (no flash); storage may be blocked
-      try { var t = localStorage.getItem("crm-theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t) } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

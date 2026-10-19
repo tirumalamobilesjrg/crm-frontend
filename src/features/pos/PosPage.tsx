@@ -26,6 +26,9 @@ export function PosPage() {
   const { notify } = useToast()
   const confirm = useConfirm()
   const attempt = useAttemptKey()
+  // set when a sale attempt ended without a definite answer (no connection / unexpected error): it may have been saved
+  const unsure = useRef(false)
+  const lastSignature = useRef('')
   const me = state.status === 'ready' ? state.profile : null
 
   const [lines, setLines] = useState<CartLine[]>([])
@@ -111,10 +114,13 @@ export function PosPage() {
     mutationFn: () => {
       const { payload } = check
       if (!payload) throw new Error('not valid')
-      return finalizeSale(payload, attempt.keyFor(JSON.stringify(payload)))
+      const signature = JSON.stringify(payload)
+      lastSignature.current = signature
+      return finalizeSale(payload, attempt.keyFor(signature))
     },
     onSuccess: (r) => {
       attempt.clear()
+      unsure.current = false
       void qc.invalidateQueries({ queryKey: ['inventory'] })
       void qc.invalidateQueries({ queryKey: ['sales'] })
       void qc.invalidateQueries({ queryKey: ['customer-invoices'] }) // the customer's purchase history
@@ -125,16 +131,28 @@ export function PosPage() {
       navigate(`/sales/${r.sale_id}`, { state: { justSold: true } })
     },
     onError: (e) => {
-      notify(toAppError(e).message, 'bad')
+      const failure = toAppError(e)
+      unsure.current = failure.code === 'network' || failure.code === undefined
+      notify(failure.message, 'bad')
       // stock or an approval may have changed under us: re-read what the screen is based on
       void qc.invalidateQueries({ queryKey: ['pos'] })
     },
   })
 
-  function complete() {
+  async function complete() {
     setShowErrors(true)
     setErrors(check.errors)
     if (!check.payload || sell.isPending) return
+    const changed = JSON.stringify(check.payload) !== lastSignature.current
+    if (unsure.current && changed) {
+      // A changed sale gets a new idempotency key, so the server could not tell it from a second sale if the first one was saved.
+      const ok = await confirm({
+        title: 'Check Sales first',
+        message: 'We could not confirm whether the previous sale was saved. Open Sales and look for it before selling again. Sell anyway?',
+        confirmLabel: 'Sell anyway',
+      })
+      if (!ok) return
+    }
     void confirm({ title: 'Complete sale', message: `Complete this sale of ${money(totals.totalPaise)} paid by ${PAYMENT_LABEL[method as PaymentMethod]}? The invoice cannot be edited afterwards.`, confirmLabel: 'Complete sale' }).then((ok) => ok && sell.mutate())
   }
 
@@ -316,7 +334,7 @@ export function PosPage() {
               {(p) => <input {...p} value={reference} maxLength={120} onChange={(e) => setReference(e.target.value)} />}
             </Field>
             <Field label="Notes (optional)">{(p) => <textarea {...p} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />}</Field>
-            <Button variant="primary" onClick={complete} disabled={sell.isPending}>
+            <Button variant="primary" onClick={() => void complete()} disabled={sell.isPending}>
               {sell.isPending ? 'Completing…' : 'Complete sale'}
             </Button>
           </section>

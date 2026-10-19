@@ -268,6 +268,29 @@ describe('POS: payment and completing the sale', () => {
     await user.click(screen.getByRole('button', { name: 'Complete sale' }))
     await waitFor(() => expect(sales.finalizeSale).toHaveBeenCalledTimes(3))
     expect(calls[2]![1]).not.toBe(calls[0]![1])
+    expect(confirmLog).toContainEqual(expect.stringContaining('could not confirm whether the previous sale was saved'))
+  })
+
+  it('after an unconfirmed attempt, changing the sale asks first and declining sends nothing; after a clear rejection it does not ask', async () => {
+    vi.mocked(sales.finalizeSale).mockRejectedValueOnce(new AppError('Cannot reach the server.', 'network')).mockRejectedValueOnce(new AppError('That stock is gone.', 'TM004')).mockResolvedValue(sold)
+    const user = userEvent.setup()
+    showPos()
+    await scan(user)
+    await pay(user)
+    await user.click(screen.getByRole('button', { name: 'Complete sale' }))
+    await screen.findByText('Cannot reach the server.')
+    await user.type(screen.getByLabelText('Reference (optional)'), 'changed')
+    declineNextConfirm() // the first dialog is the "check Sales first" one
+    await user.click(screen.getByRole('button', { name: 'Complete sale' }))
+    expect(confirmLog).toContainEqual(expect.stringContaining('Open Sales and look for it'))
+    expect(sales.finalizeSale).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole('button', { name: 'Complete sale' })) // asks again; confirmed this time, then the sale confirmation
+    await screen.findByText('That stock is gone.')
+    confirmLog.length = 0
+    await user.type(screen.getByLabelText('Reference (optional)'), '2')
+    await user.click(screen.getByRole('button', { name: 'Complete sale' }))
+    await waitFor(() => expect(sales.finalizeSale).toHaveBeenCalledTimes(3))
+    expect(confirmLog.some((m) => m.includes('Open Sales and look for it'))).toBe(false)
   })
 
   it('does not submit twice while the first request is in flight', async () => {
