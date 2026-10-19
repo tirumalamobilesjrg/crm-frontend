@@ -7,7 +7,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import { toAppError } from '../../lib/errors'
 import { formatINR } from '../../lib/money'
 import type { Expense } from '../../lib/types'
-import { Button, Dialog, ErrorBox, Field, Loading, Pagination, useToast } from '../../components/ui'
+import { Button, Dialog, ErrorBox, Field, Loading, Pagination, useConfirm, useToast } from '../../components/ui'
 import { PAYMENT_LABEL, PAYMENT_METHODS } from '../pos/logic'
 import { EXPENSE_CATEGORIES, isoDate, monthStart, summarizeExpenses, validateExpense, type ExpenseForm } from './logic'
 
@@ -100,6 +100,7 @@ function ExpenseDialog({ expense, categories, onClose }: { expense: Expense | nu
 export function ExpensesPage() {
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const { state } = useAuth()
   const isAdmin = state.status === 'ready' && state.profile.role === 'admin'
   const [params, setParams] = useSearchParams()
@@ -219,7 +220,7 @@ export function ExpensesPage() {
                         variant="danger"
                         disabled={remove.isPending}
                         aria-label={`Delete expense ${x.category} ${x.expense_date}`}
-                        onClick={() => window.confirm(`Delete this ${formatINR(x.amount)} ${x.category} expense?`) && remove.mutate(x.id)}
+                        onClick={() => void confirm({ title: 'Delete expense', message: `Delete this ${formatINR(x.amount)} ${x.category} expense?`, confirmLabel: 'Delete', danger: true }).then((ok) => ok && remove.mutate(x.id))}
                       >
                         Delete
                       </Button>

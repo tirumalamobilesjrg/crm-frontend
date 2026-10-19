@@ -5,7 +5,7 @@ import { deleteCustomer, getCustomer, listCustomerInvoices } from '../../api/cus
 import { useAuth } from '../../auth/AuthProvider'
 import { toAppError } from '../../lib/errors'
 import { formatINR } from '../../lib/money'
-import { Button, ErrorBox, Loading, useToast } from '../../components/ui'
+import { Button, ErrorBox, Loading, useConfirm, useToast } from '../../components/ui'
 import { CustomerFormDialog } from './CustomersPage'
 
 export function CustomerDetailPage() {
@@ -13,6 +13,7 @@ export function CustomerDetailPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const { state } = useAuth()
   const isAdmin = state.status === 'ready' && state.profile.role === 'admin'
   const [editing, setEditing] = useState(false)
@@ -47,7 +48,7 @@ export function CustomerDetailPage() {
             <Button
               variant="danger"
               disabled={remove.isPending}
-              onClick={() => window.confirm(`Delete ${c.name}? A customer who has bought something cannot be deleted.`) && remove.mutate()}
+              onClick={() => void confirm({ title: 'Delete customer', message: `Delete ${c.name}? A customer who has bought something cannot be deleted.`, confirmLabel: 'Delete', danger: true }).then((ok) => ok && remove.mutate())}
             >
               Delete
             </Button>

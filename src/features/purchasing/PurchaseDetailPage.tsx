@@ -15,7 +15,7 @@ import { newIdempotencyKey } from '../../lib/idempotency'
 import { useStoredValues } from '../../lib/useStoredValues'
 import { formatINR } from '../../lib/money'
 import type { PurchaseLine } from '../../lib/types'
-import { Badge, Button, ErrorBox, Field, Loading, useToast } from '../../components/ui'
+import { Badge, Button, ErrorBox, Field, Loading, useConfirm, useToast } from '../../components/ui'
 import { STATUS_LABEL, STATUS_TONE } from './PurchasesPage'
 import { analyseUnits, buildSlots, type ReceiveAnalysis } from './receiving'
 import { validateLine, variantLabel, type LineForm } from './validation'
@@ -146,6 +146,7 @@ export function PurchaseDetailPage() {
   const { id = '' } = useParams()
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const purchase = useQuery({ queryKey: ['purchase', id], queryFn: () => getPurchase(id) })
   const lines = useQuery({ queryKey: ['purchase-lines', id], queryFn: () => listPurchaseLines(id) })
   const [values, setValues, clearValues] = useStoredValues(`receive-units:${id}`)
@@ -215,7 +216,7 @@ export function PurchaseDetailPage() {
     }
     const phones = analysis.units.length
     const extra = accessoryLines.reduce((n, l) => n + l.quantity, 0)
-    if (window.confirm(`Receive ${phones} phone(s) and ${extra} accessory unit(s) into stock? This cannot be undone.`)) receive.mutate()
+    void confirm({ title: 'Receive stock', message: `Receive ${phones} phone(s) and ${extra} accessory unit(s) into stock? This cannot be undone.`, confirmLabel: 'Receive stock' }).then((ok) => ok && receive.mutate())
   }
 
   return (
@@ -312,7 +313,7 @@ export function PurchaseDetailPage() {
             <Button
               variant="danger"
               disabled={cancel.isPending || receive.isPending}
-              onClick={() => window.confirm('Cancel this draft purchase? Nothing is added to stock.') && cancel.mutate()}
+              onClick={() => void confirm({ title: 'Cancel purchase', message: 'Cancel this draft purchase? Nothing is added to stock.', confirmLabel: 'Cancel purchase', danger: true }).then((ok) => ok && cancel.mutate())}
             >
               Cancel purchase
             </Button>

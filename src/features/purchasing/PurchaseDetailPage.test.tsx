@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PurchaseDetailPage } from './PurchaseDetailPage'
-import { readyState, renderApp } from '../../test/utils'
+import { autoConfirm, readyState, renderApp } from '../../test/utils'
 import * as api from '../../api/purchasing'
 import { NO_ROWS_MESSAGE } from '../../api/db'
 import { AppError } from '../../lib/errors'
@@ -37,7 +37,7 @@ const received = { purchase_id: 'p1', units_received: 2, quantity_lines_received
 describe('PurchaseDetailPage receiving', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    autoConfirm()
     vi.mocked(api.getPurchase).mockResolvedValue(purchase())
     vi.mocked(api.listVariantOptions).mockResolvedValue([])
     vi.mocked(api.listPurchaseLines).mockResolvedValue([line('l1', 'NX1', 2, 'serialized'), line('l2', 'CASE', 10, 'quantity')])
@@ -141,7 +141,7 @@ describe('PurchaseDetailPage receiving', () => {
 describe('PurchaseDetailPage stale or finalised records', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    autoConfirm()
     vi.mocked(api.getPurchase).mockResolvedValue(purchase())
     vi.mocked(api.listVariantOptions).mockResolvedValue([])
     vi.mocked(api.listPurchaseLines).mockResolvedValue([line('l1', 'NX1', 2, 'serialized')])

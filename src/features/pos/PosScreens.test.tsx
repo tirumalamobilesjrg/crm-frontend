@@ -7,7 +7,7 @@ import { InvoicePage } from './InvoicePage'
 import { SalesPage } from './SalesPage'
 import { ApprovalsPage } from './ApprovalsPage'
 import { AppRoutes } from '../../App'
-import { readyState, renderApp } from '../../test/utils'
+import { autoConfirm, confirmLog, declineNextConfirm, readyState, renderApp } from '../../test/utils'
 import * as sales from '../../api/sales'
 import * as settings from '../../api/settings'
 import { AppError } from '../../lib/errors'
@@ -51,7 +51,7 @@ const pay = async (user: ReturnType<typeof userEvent.setup>) => user.selectOptio
 
 beforeEach(() => {
   vi.resetAllMocks()
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  autoConfirm()
   vi.mocked(settings.listPolicies).mockResolvedValue([policy('admin'), policy('manager')])
   vi.mocked(settings.listStaff).mockResolvedValue([
     { user_id: '11111111-1111-1111-1111-111111111111', full_name: 'Mohan Manager', role: 'manager', phone: null, is_active: true, created_at: '' },
@@ -107,6 +107,7 @@ describe('POS: adding items', () => {
     const user = userEvent.setup()
     showPos()
     await user.selectOptions(await screen.findByLabelText('Accessory'), 'a1')
+    await user.click(screen.getByRole('button', { name: 'Add accessory' }))
     const qty = await screen.findByLabelText('Quantity for CASE')
     await user.clear(qty)
     await user.type(qty, '21')
@@ -202,13 +203,13 @@ describe('POS: payment and completing the sale', () => {
   })
 
   it('asks for confirmation, and cancelling sends nothing', async () => {
-    vi.mocked(window.confirm).mockReturnValueOnce(false)
+    declineNextConfirm()
     const user = userEvent.setup()
     showPos()
     await scan(user)
     await pay(user)
     await user.click(screen.getByRole('button', { name: 'Complete sale' }))
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('₹19,000.00 paid by Cash'))
+    expect(confirmLog).toContainEqual(expect.stringContaining('₹19,000.00 paid by Cash'))
     expect(sales.finalizeSale).not.toHaveBeenCalled()
   })
 
@@ -218,6 +219,7 @@ describe('POS: payment and completing the sale', () => {
     showPos()
     await scan(user)
     await user.selectOptions(await screen.findByLabelText('Accessory'), 'a1')
+    await user.click(screen.getByRole('button', { name: 'Add accessory' }))
     await pay(user)
     await user.type(screen.getByLabelText('Reference (optional)'), 'till 1')
     await user.click(screen.getByRole('button', { name: 'Complete sale' }))

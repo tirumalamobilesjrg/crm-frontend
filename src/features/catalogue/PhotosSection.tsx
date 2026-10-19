@@ -3,12 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { deletePhoto, listImages, photoUrl, setPrimaryPhoto, swapPhotoOrder, updateImageAlt, uploadPhoto } from '../../api/productMedia'
 import { toAppError } from '../../lib/errors'
 import type { ProductImage } from '../../lib/types'
-import { Badge, Button, ErrorBox, Loading, useToast } from '../../components/ui'
+import { Badge, Button, ErrorBox, Loading, useConfirm, useToast } from '../../components/ui'
 import { MAX_BATCH, MAX_INPUT_BYTES, PHOTO_TYPES, sortImages, validateAlt, validateChosen } from './media'
 
 function PhotoCard({ image, index, total, all, productId }: { image: ProductImage; index: number; total: number; all: ProductImage[]; productId: string }) {
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const [alt, setAlt] = useState(image.alt_text)
   const refresh = () => void qc.invalidateQueries({ queryKey: ['product-images', productId] })
   const onError = (e: unknown) => notify(toAppError(e).message, 'bad')
@@ -48,7 +49,7 @@ function PhotoCard({ image, index, total, all, productId }: { image: ProductImag
             variant="danger"
             disabled={busy}
             aria-label={`Delete photo ${index + 1}`}
-            onClick={() => window.confirm('Delete this photo? It disappears from the website straight away.') && remove.mutate()}
+            onClick={() => void confirm({ title: 'Delete photo', message: 'Delete this photo? It disappears from the website straight away.', confirmLabel: 'Delete', danger: true }).then((ok) => ok && remove.mutate())}
           >
             Delete
           </Button>

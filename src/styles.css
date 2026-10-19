@@ -232,6 +232,7 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .overlay { position: fixed; inset: 0; background: rgba(17, 35, 59, 0.5); display: grid; place-items: center; padding: 1rem; z-index: 50; animation: fade 0.14s ease; }
 .dialog { background: var(--surface); border-radius: var(--radius-l); padding: 1.2rem 1.4rem 1.3rem; width: min(640px, 100%); max-height: 92vh; overflow: auto; box-shadow: var(--shadow-pop); animation: rise 0.16s ease; }
 .dialog-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; } .dialog-head h2 { margin: 0; font-family: var(--font-display); font-size: 1.25rem; }
+.confirm-dialog { width: min(460px, 100%); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
 @keyframes fade { from { opacity: 0; } } @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 .toasts { position: fixed; right: 1rem; bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 60; width: min(400px, calc(100vw - 2rem)); }
@@ -304,6 +305,19 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
   body { background: #fff; }
   .invoice { border: 0; border-radius: 0; padding: 0; max-width: none; margin: 0; }
   .invoice-lines { display: table !important; overflow: visible; }
+}
+
+/* ---- phone width: tables with a header row become one card per row (labels are added by components/tableCards.ts) ---- */
+@media (max-width: 700px) {
+  .table.row-cards { display: block; overflow: visible; }
+  .table.row-cards thead { position: absolute; left: -9999px; }
+  .table.row-cards tbody, .table.row-cards tr, .table.row-cards td { display: block; }
+  .table.row-cards tr { border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--surface); padding: 0.4rem 0.8rem; margin-bottom: 0.65rem; }
+  .table.row-cards tbody tr:hover { background: var(--surface); }
+  .table.row-cards td { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border: 0; padding: 0.35rem 0; text-align: right; min-width: 0; }
+  .table.row-cards td:first-child { min-width: 0; font-weight: 600; }
+  .table.row-cards td[data-label]::before { content: attr(data-label); flex: none; color: var(--muted); font-size: 0.86rem; font-weight: 500; text-align: left; }
+  .table.row-cards td.muted { display: block; text-align: center; }
 }
 
 /* ---- motion preferences ---- */

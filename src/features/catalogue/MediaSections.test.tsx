@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { PhotosSection } from './PhotosSection'
 import { SpecsSection } from './SpecsSection'
-import { readyState, renderApp } from '../../test/utils'
+import { autoConfirm, declineNextConfirm, readyState, renderApp } from '../../test/utils'
 import * as media from '../../api/productMedia'
 import { AppError } from '../../lib/errors'
 import { NO_ROWS_MESSAGE } from '../../api/db'
@@ -20,7 +20,7 @@ const showSpecs = () => renderApp(<SpecsSection productId="p1" />, { state: read
 
 beforeEach(() => {
   vi.resetAllMocks()
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  autoConfirm()
   URL.createObjectURL = vi.fn(() => 'blob:preview')
   URL.revokeObjectURL = vi.fn()
   vi.mocked(media.photoUrl).mockImplementation((p) => `https://x.supabase.co/storage/v1/object/public/product-images/${p}`)
@@ -182,7 +182,7 @@ describe('PhotosSection', () => {
     const user = userEvent.setup()
     showPhotos()
     const del = await screen.findByRole('button', { name: 'Delete photo 1' })
-    vi.mocked(window.confirm).mockReturnValueOnce(false)
+    declineNextConfirm()
     await user.click(del)
     expect(media.deletePhoto).not.toHaveBeenCalled()
     await user.click(del)

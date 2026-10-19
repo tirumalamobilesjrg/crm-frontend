@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createProduct, listBrands, listCategories, listProducts, setPublished } from '../../api/catalogue'
 import { productSlug } from '../../lib/slug'
 import { toAppError } from '../../lib/errors'
-import { Badge, Button, Dialog, ErrorBox, Field, Loading, useToast } from '../../components/ui'
+import { Badge, Button, Dialog, ErrorBox, Field, Loading, useConfirm, useToast } from '../../components/ui'
 import { useAuth } from '../../auth/AuthProvider'
 import { validateProduct, type ProductForm } from './validation'
 
@@ -93,6 +93,7 @@ function NewProductDialog({ onClose }: { onClose: () => void }) {
 export function ProductsPage() {
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const [creating, setCreating] = useState(false)
   const [search, setSearch] = useState('')
   const list = useQuery({ queryKey: ['products'], queryFn: listProducts })
@@ -155,9 +156,11 @@ export function ProductsPage() {
                     disabled={publish.isPending}
                     onClick={() => {
                       const next = !p.is_published
-                      if (window.confirm(next ? `Publish "${p.name}" on the public website?` : `Remove "${p.name}" from the public website?`)) {
-                        publish.mutate({ id: p.id, value: next })
-                      }
+                      void confirm({
+                        title: next ? 'Publish product' : 'Unpublish product',
+                        message: next ? `Publish "${p.name}" on the public website?` : `Remove "${p.name}" from the public website?`,
+                        confirmLabel: next ? 'Publish' : 'Unpublish',
+                      }).then((ok) => ok && publish.mutate({ id: p.id, value: next }))
                     }}
                   >
                     {p.is_published ? 'Unpublish' : 'Publish'}

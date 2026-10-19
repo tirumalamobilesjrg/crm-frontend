@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { InventoryPage } from './InventoryPage'
 import { DeviceDetailPage } from './DeviceDetailPage'
 import { AccessoryDetailPage } from './AccessoryDetailPage'
-import { readyState, renderApp } from '../../test/utils'
+import { autoConfirm, readyState, renderApp } from '../../test/utils'
 import * as api from '../../api/inventory'
 import * as settings from '../../api/settings'
 import { AppError } from '../../lib/errors'
@@ -39,7 +39,7 @@ function showPage(route: string) {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  autoConfirm()
   vi.mocked(api.loadInventorySummary).mockResolvedValue(summary)
   vi.mocked(api.listVariantIndex).mockResolvedValue([{ id: 'v1', sku: 'NOVA-X1', color: 'Black', ram_gb: 8, storage_gb: 128, product: { name: 'X1', brand: { name: 'Nova' } } }])
   vi.mocked(api.listDevices).mockResolvedValue({ rows: [device()], total: 1 })

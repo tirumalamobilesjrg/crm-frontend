@@ -1,4 +1,5 @@
 import { chromium } from 'playwright-core'
+import { handleConfirmDialogs } from './confirm-handler.mjs'
 import { readFileSync } from 'node:fs'
 const BASE = 'http://127.0.0.1:4173'
 const results = []
@@ -66,7 +67,7 @@ try {
   const waitForRpcCalls = async (n) => { for (let i = 0; i < 40; i++) { if ((await rpcCalls()).length >= n) return; await new Promise((r) => setTimeout(r, 100)) } }
   const dialogs = []
   let acceptDialogs = false
-  page.on('dialog', async (d) => { dialogs.push(d.message()); await (acceptDialogs ? d.accept() : d.dismiss()) })
+  await handleConfirmDialogs(page, { decide: () => acceptDialogs, seen: (m) => dialogs.push(m) })
   const unit = (n) => page.getByLabel(new RegExp(`phone ${n} of 2`))
 
   await page.getByRole('link', { name: 'Suppliers' }).click()
@@ -121,7 +122,7 @@ try {
   check('line totals add up (2 x 15,000 + 10 x 200)', await page.getByText('₹32,000.00').first().isVisible())
   check('accessories get no IMEI box; phones get one box each', (await page.getByPlaceholder(/Scan or type/).count()) === 2)
 
-  await page.getByRole('button', { name: 'Receive stock' }).click()
+  await page.getByRole('button', { name: 'Receive stock' }).first().click()
   await page.getByText('Fill in every IMEI or serial number').first().waitFor({ timeout: 5000 })
   check('receiving with empty boxes is blocked, with no confirmation dialog', dialogs.length === 0 && (await page.getByText('Required').count()) === 2)
   await unit(1).fill('490154203237519')
@@ -301,6 +302,7 @@ try {
   check('the same phone cannot be added twice', true)
 
   await page.getByLabel('Accessory').selectOption('v-case')
+  await page.getByRole('button', { name: 'Add accessory' }).click()
   const qty = page.getByLabel('Quantity for NOVA-CASE')
   await qty.fill('27')
   check('more accessories than in stock is flagged (26 on hand)', await page.getByText('Only 26 in stock.').isVisible())

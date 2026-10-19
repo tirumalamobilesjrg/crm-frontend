@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Tabs } from '../../components/ui'
 import { DiscountPolicySection } from './DiscountPolicySection'
 import { ShopProfileSection } from './ShopProfileSection'
 import { StaffSection } from './StaffSection'
@@ -15,16 +16,11 @@ export function SettingsPage() {
   return (
     <div>
       <h1>Settings</h1>
-      <div className="tabs" role="tablist">
-        {TABS.map((t) => (
-          <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'tab active' : 'tab'} onClick={() => setTab(t.id)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-      {tab === 'discounts' && <DiscountPolicySection />}
-      {tab === 'shop' && <ShopProfileSection />}
-      {tab === 'staff' && <StaffSection />}
+      <Tabs tabs={TABS} value={tab} onChange={setTab} label="Settings sections">
+        {tab === 'discounts' && <DiscountPolicySection />}
+        {tab === 'shop' && <ShopProfileSection />}
+        {tab === 'staff' && <StaffSection />}
+      </Tabs>
     </div>
   )
 }

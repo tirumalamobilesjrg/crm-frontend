@@ -7,7 +7,7 @@ import { toAppError } from '../../lib/errors'
 import { formatINR } from '../../lib/money'
 import { useAttemptKey } from '../../lib/useAttemptKey'
 import type { AdjustmentReason, AdjustStatusResult, CorrectionResult, InventoryItem } from '../../lib/types'
-import { Badge, Button, Dialog, ErrorBox, Field, Loading, useToast } from '../../components/ui'
+import { Badge, Button, Dialog, ErrorBox, Field, Loading, useConfirm, useToast } from '../../components/ui'
 import { MovementHistory } from './MovementHistory'
 import {
   CONDITION_LABEL, deviceReasonOptions, REASON_LABEL, STATUS_LABEL, STATUS_TONE, validateCorrection, validateStatusAdjustment,
@@ -101,6 +101,7 @@ function AdjustStatusDialog({ device, onClose }: { device: InventoryItem; onClos
 function CorrectDialog({ device, onClose }: { device: InventoryItem; onClose: () => void }) {
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const attempt = useAttemptKey()
   const [form, setForm] = useState<CorrectionForm>({ imei1: device.imei1 ?? '', imei2: device.imei2 ?? '', serial: device.serial_number ?? '', reason: '' })
   const [errors, setErrors] = useState<ReturnType<typeof validateCorrection>['errors']>({})
@@ -119,13 +120,14 @@ function CorrectDialog({ device, onClose }: { device: InventoryItem; onClose: ()
     onError: (e) => notify(toAppError(e).message, 'bad'),
   })
 
-  function submit(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault()
     const { errors: found, changes } = validateCorrection(device, form)
     setErrors(found)
     if (!changes || save.isPending) return
     const summary = Object.keys(changes).join(', ').replace('serial_number', 'serial number')
-    if (window.confirm(`Correct the ${summary} of this device? The old values stay in the history and the change is audited.`)) save.mutate(changes)
+    const ok = await confirm({ title: 'Correct IMEI / serial', message: `Correct the ${summary} of this device? The old values stay in the history and the change is audited.`, confirmLabel: 'Correct' })
+    if (ok) save.mutate(changes)
   }
 
   return (

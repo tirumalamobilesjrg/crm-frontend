@@ -1,5 +1,5 @@
 import {
-  createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ButtonHTMLAttributes, type ReactNode,
+  createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent, type ReactNode,
 } from 'react'
 import { Icon, type IconName } from './icons'
 import { useFocusTrap } from './useFocusTrap'
@@ -109,7 +109,7 @@ export function Field({ label, error, hint, children }: FieldProps) {
 let openDialogs = 0
 
 /** Modal dialog: focus moves in and stays in, Escape and the backdrop close it, focus returns to what opened it, the page behind does not scroll. */
-export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Dialog({ title, onClose, children, className = '' }: { title: string; onClose: () => void; children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const titleId = useId()
   useFocusTrap(ref, true, onClose)
@@ -123,7 +123,7 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
   }, [])
   return (
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref}>
+      <div className={`dialog ${className}`.trim()} role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref}>
         <header className="dialog-head">
           <h2 id={titleId}>{title}</h2>
           <button className="icon-btn" aria-label="Close" onClick={onClose}>
@@ -134,6 +134,47 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
       </div>
     </div>
   )
+}
+
+interface ConfirmOptions {
+  title?: string
+  message: string
+  confirmLabel?: string
+  /** Style the confirm button as destructive. */
+  danger?: boolean
+}
+const ConfirmContext = createContext<((options: ConfirmOptions) => Promise<boolean>) | null>(null)
+
+/** Replaces window.confirm: resolves true on the confirm button, false on Cancel, Escape, the X or the backdrop. */
+export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const [pending, setPending] = useState<{ options: ConfirmOptions; resolve: (ok: boolean) => void } | null>(null)
+  const confirm = useCallback((options: ConfirmOptions) => new Promise<boolean>((resolve) => setPending({ options, resolve })), [])
+  const answer = (ok: boolean) => {
+    pending?.resolve(ok)
+    setPending(null)
+  }
+  return (
+    <ConfirmContext.Provider value={confirm}>
+      {children}
+      {pending && (
+        <Dialog title={pending.options.title ?? 'Please confirm'} onClose={() => answer(false)} className="confirm-dialog">
+          <p>{pending.options.message}</p>
+          <div className="dialog-actions">
+            <Button onClick={() => answer(false)}>Cancel</Button>
+            <Button variant={pending.options.danger ? 'danger' : 'primary'} onClick={() => answer(true)}>
+              {pending.options.confirmLabel ?? 'Confirm'}
+            </Button>
+          </div>
+        </Dialog>
+      )}
+    </ConfirmContext.Provider>
+  )
+}
+
+export function useConfirm() {
+  const ctx = useContext(ConfirmContext)
+  if (!ctx) throw new Error('useConfirm must be used inside <ToastProvider>')
+  return ctx
 }
 
 interface Toast {
@@ -156,7 +197,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ notify }), [notify])
   return (
     <ToastContext.Provider value={value}>
-      {children}
+      <ConfirmProvider>{children}</ConfirmProvider>
       <div className="toasts">
         {toasts.map((t) => (
           <div key={t.id} className={`toast toast-${t.tone}`} role={t.tone === 'bad' ? 'alert' : 'status'}>
@@ -192,5 +233,53 @@ export function Pagination({ page, pages, onPage }: { page: number; pages: numbe
         Next
       </Button>
     </nav>
+  )
+}
+
+/**
+ * Tab list with the WAI-ARIA tabs pattern: only the selected tab is in the Tab order, Left/Right/Home/End move between tabs
+ * (and select them), and the content is a tabpanel labelled by its tab.
+ */
+export function Tabs<T extends string>({ tabs, value, onChange, label, children }: {
+  tabs: ReadonlyArray<{ id: T; label: string }>
+  value: T
+  onChange: (id: T) => void
+  label: string
+  children: ReactNode
+}) {
+  const base = useId()
+  const refs = useRef(new Map<T, HTMLButtonElement>())
+  function onKeyDown(e: KeyboardEvent) {
+    const i = tabs.findIndex((t) => t.id === value)
+    const next = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i - 1 + tabs.length) % tabs.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1
+    if (next < 0) return
+    e.preventDefault()
+    const id = tabs[next]!.id
+    onChange(id)
+    refs.current.get(id)?.focus()
+  }
+  return (
+    <>
+      <div className="tabs" role="tablist" aria-label={label} onKeyDown={onKeyDown}>
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            id={`${base}-tab-${t.id}`}
+            aria-selected={value === t.id}
+            aria-controls={`${base}-panel`}
+            tabIndex={value === t.id ? 0 : -1}
+            ref={(el) => { if (el) refs.current.set(t.id, el); else refs.current.delete(t.id) }}
+            onClick={() => onChange(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`${base}-panel`} aria-labelledby={`${base}-tab-${value}`}>
+        {children}
+      </div>
+    </>
   )
 }

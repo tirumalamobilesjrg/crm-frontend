@@ -8,7 +8,7 @@ import { ExpensesPage } from '../expenses/ExpensesPage'
 import { ReportsPage } from '../reports/ReportsPage'
 import { AuditPage } from '../audit/AuditPage'
 import { AppRoutes } from '../../App'
-import { readyState, renderApp } from '../../test/utils'
+import { autoConfirm, confirmLog, declineNextConfirm, readyState, renderApp } from '../../test/utils'
 import * as customers from '../../api/customers'
 import * as sales from '../../api/sales'
 import * as expenses from '../../api/expenses'
@@ -32,7 +32,7 @@ const rent: Expense = { id: 'e1', expense_date: '2026-10-05', category: 'Rent', 
 
 beforeEach(() => {
   vi.resetAllMocks()
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  autoConfirm()
   vi.mocked(settings.listStaff).mockResolvedValue([{ user_id: '11111111-1111-1111-1111-111111111111', full_name: 'Mohan Manager', role: 'manager', phone: null, is_active: true, created_at: '' }])
 })
 
@@ -110,7 +110,7 @@ describe('CustomerDetailPage', () => {
     const user = userEvent.setup()
     show('admin')
     await user.click(await screen.findByRole('button', { name: 'Delete' }))
-    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Delete Ravi Kumar?'))
+    expect(confirmLog).toContainEqual(expect.stringContaining('Delete Ravi Kumar?'))
     expect(await screen.findByText(/still in use elsewhere/)).toBeInTheDocument()
     expect(screen.queryByText('list')).not.toBeInTheDocument()
     vi.mocked(customers.deleteCustomer).mockResolvedValue(undefined)
@@ -118,7 +118,7 @@ describe('CustomerDetailPage', () => {
     expect(await screen.findByText('list')).toBeInTheDocument()
   })
   it('does not delete when the confirmation is declined', async () => {
-    vi.mocked(window.confirm).mockReturnValue(false)
+    declineNextConfirm()
     show('admin')
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Delete' }))
     expect(customers.deleteCustomer).not.toHaveBeenCalled()

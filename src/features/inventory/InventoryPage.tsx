@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { listAccessories, listDevices, listVariantIndex, loadInventorySummary, PAGE_SIZE } from '../../api/inventory'
 import type { InventoryStatus } from '../../lib/types'
-import { Badge, Button, ErrorBox, Loading, Pagination } from '../../components/ui'
+import { Badge, Button, ErrorBox, Loading, Pagination, Tabs } from '../../components/ui'
 import { CONDITION_LABEL, matchVariantIds, pageCount, sanitizeSearch, STATUSES, STATUS_LABEL, STATUS_TONE, variantTitle } from './logic'
 
 type Tab = 'devices' | 'accessories'
@@ -223,6 +223,11 @@ function AccessoriesTab() {
   )
 }
 
+const INVENTORY_TABS: ReadonlyArray<{ id: Tab; label: string }> = [
+  { id: 'devices', label: 'Phones (by IMEI)' },
+  { id: 'accessories', label: 'Accessories (by quantity)' },
+]
+
 export function InventoryPage() {
   const [params, setParams] = useSearchParams()
   const tab: Tab = params.get('tab') === 'accessories' ? 'accessories' : 'devices'
@@ -232,15 +237,14 @@ export function InventoryPage() {
         <h1>Inventory</h1>
       </div>
       <Summary />
-      <div className="tabs" role="tablist" aria-label="Inventory type">
-        <button role="tab" aria-selected={tab === 'devices'} onClick={() => setParams({}, { replace: true })}>
-          Phones (by IMEI)
-        </button>
-        <button role="tab" aria-selected={tab === 'accessories'} onClick={() => setParams({ tab: 'accessories' }, { replace: true })}>
-          Accessories (by quantity)
-        </button>
-      </div>
-      {tab === 'devices' ? <DevicesTab /> : <AccessoriesTab />}
+      <Tabs
+        tabs={INVENTORY_TABS}
+        value={tab}
+        onChange={(t) => setParams(t === 'accessories' ? { tab: 'accessories' } : {}, { replace: true })}
+        label="Inventory type"
+      >
+        {tab === 'devices' ? <DevicesTab /> : <AccessoriesTab />}
+      </Tabs>
     </div>
   )
 }

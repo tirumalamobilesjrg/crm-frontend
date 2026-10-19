@@ -1,4 +1,5 @@
 // Captures the key screens (desktop light, desktop dark, phone) against the stand-in server for visual review.
+import { handleConfirmDialogs } from './confirm-handler.mjs'
 // Run: npm run screenshots   (output: e2e/out/ui-*.png). Not a test: nothing here asserts.
 import { chromium } from 'playwright-core'
 
@@ -40,7 +41,7 @@ try {
   await settle(page)
   await shot(page, 'desktop-login')
   await login(page)
-  page.on('dialog', (d) => d.accept())
+  await handleConfirmDialogs(page, { decide: () => true })
   // two sales so the dashboard has real figures
   await sell(page, luhnImei('87000000000001'))
   await page.getByRole('button', { name: 'Complete sale' }).click()
@@ -49,6 +50,7 @@ try {
   await shot(page, 'desktop-invoice', true)
   await sell(page, luhnImei('87000000000002'), 'upi')
   await page.getByLabel('Accessory').selectOption('v-case')
+  await page.getByRole('button', { name: 'Add accessory' }).click()
   await settle(page)
   await shot(page, 'desktop-pos-cart', true)
   await page.getByRole('button', { name: 'Complete sale' }).click()
@@ -95,7 +97,7 @@ try {
 
   // ---- phone
   page = await session({ width: 390, height: 844 })
-  page.on('dialog', (d) => d.accept())
+  await handleConfirmDialogs(page, { decide: () => true })
   await page.goto(BASE + '/login')
   await settle(page)
   await shot(page, 'phone-login', true)

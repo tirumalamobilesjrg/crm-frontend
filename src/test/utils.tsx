@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react'
 import { MemoryRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render } from '@testing-library/react'
+import { act, render } from '@testing-library/react'
 import { AuthContext, type AuthState } from '../auth/AuthProvider'
 import { ToastProvider } from '../components/ui'
 import type { StaffProfile, StaffRole } from '../lib/types'
@@ -42,4 +42,35 @@ export function renderApp(ui: ReactElement, opts: { state: AuthState; route?: st
       </ToastProvider>
     </QueryClientProvider>,
   )
+}
+
+/** Messages shown by the in-app confirmation dialog since the last autoConfirm() call. */
+export const confirmLog: string[] = []
+let declines = 0
+let watching = false
+
+/** Make the next confirmation dialog answer "Cancel" instead of confirming. */
+export function declineNextConfirm() {
+  declines++
+}
+
+/**
+ * Answer every in-app confirmation dialog automatically (confirm by default) and record its message in `confirmLog`, so a test
+ * can assert what the user was asked. Call from beforeEach; the dialog itself is covered by ui.test.tsx.
+ */
+export function autoConfirm() {
+  confirmLog.length = 0
+  declines = 0
+  if (watching) return
+  watching = true
+  new MutationObserver(() => {
+    const dialog = document.querySelector('.confirm-dialog')
+    if (!dialog || dialog.hasAttribute('data-answered')) return
+    dialog.setAttribute('data-answered', 'true')
+    confirmLog.push(dialog.querySelector('p')?.textContent ?? '')
+    const buttons = dialog.querySelectorAll<HTMLButtonElement>('.dialog-actions button')
+    const choice = declines > 0 ? buttons[0] : buttons[buttons.length - 1]
+    if (declines > 0) declines--
+    act(() => choice?.click())
+  }).observe(document.body, { childList: true, subtree: true })
 }

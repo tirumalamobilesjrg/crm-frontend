@@ -4,7 +4,7 @@ import { addStaff, listStaff, updateStaff } from '../../api/settings'
 import { useAuth } from '../../auth/AuthProvider'
 import { toAppError } from '../../lib/errors'
 import type { StaffRole } from '../../lib/types'
-import { Badge, Button, Dialog, ErrorBox, Field, Loading, useToast } from '../../components/ui'
+import { Badge, Button, Dialog, ErrorBox, Field, Loading, useConfirm, useToast } from '../../components/ui'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -70,6 +70,7 @@ export function StaffSection() {
   const me = state.status === 'ready' ? state.profile.user_id : ''
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const [adding, setAdding] = useState(false)
   const q = useQuery({ queryKey: ['staff'], queryFn: listStaff })
   const change = useMutation({
@@ -112,7 +113,8 @@ export function StaffSection() {
                     aria-label={`Role of ${s.full_name}`}
                     value={s.role}
                     onChange={(e) => {
-                      if (window.confirm(`Change ${s.full_name} to ${e.target.value}?`)) change.mutate({ id: s.user_id, patch: { role: e.target.value as StaffRole } })
+                      const role = e.target.value as StaffRole
+                      void confirm({ title: 'Change role', message: `Change ${s.full_name} to ${role}?`, confirmLabel: 'Change role' }).then((ok) => ok && change.mutate({ id: s.user_id, patch: { role } }))
                     }}
                   >
                     <option value="manager">Manager</option>
@@ -124,7 +126,8 @@ export function StaffSection() {
                   <Button
                     small
                     onClick={() => {
-                      if (window.confirm(`${s.is_active ? 'Deactivate' : 'Reactivate'} ${s.full_name}?`)) change.mutate({ id: s.user_id, patch: { is_active: !s.is_active } })
+                      const verb = s.is_active ? 'Deactivate' : 'Reactivate'
+                      void confirm({ title: `${verb} staff member`, message: `${verb} ${s.full_name}?`, confirmLabel: verb, danger: s.is_active }).then((ok) => ok && change.mutate({ id: s.user_id, patch: { is_active: !s.is_active } }))
                     }}
                   >
                     {s.is_active ? 'Deactivate' : 'Reactivate'}

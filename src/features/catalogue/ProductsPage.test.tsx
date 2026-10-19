@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ProductsPage } from './ProductsPage'
-import { readyState, renderApp } from '../../test/utils'
+import { autoConfirm, declineNextConfirm, readyState, renderApp } from '../../test/utils'
 import * as api from '../../api/catalogue'
 import { AppError } from '../../lib/errors'
 import type { ProductRow } from '../../lib/types'
@@ -33,20 +33,19 @@ describe('ProductsPage', () => {
   })
 
   it('asks for confirmation before publishing, and only then calls the API', async () => {
-    const confirm = vi.spyOn(window, 'confirm')
+    autoConfirm()
     renderApp(<ProductsPage />, { state: readyState('manager') })
     const user = userEvent.setup()
     const rowEl = (await screen.findByText('Nova X1')).closest('tr')!
-    confirm.mockReturnValueOnce(false)
+    declineNextConfirm()
     await user.click(within(rowEl).getByRole('button', { name: 'Publish' }))
     expect(api.setPublished).not.toHaveBeenCalled()
-    confirm.mockReturnValueOnce(true)
     await user.click(within(rowEl).getByRole('button', { name: 'Publish' }))
     expect(api.setPublished).toHaveBeenCalledWith('p1', true)
   })
 
   it('shows the database error message when publishing is refused', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    autoConfirm()
     vi.mocked(api.setPublished).mockRejectedValue(new AppError('You do not have permission to do that.', '42501'))
     renderApp(<ProductsPage />, { state: readyState('manager') })
     const rowEl = (await screen.findByText('Nova X1')).closest('tr')!

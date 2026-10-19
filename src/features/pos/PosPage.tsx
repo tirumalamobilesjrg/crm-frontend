@@ -8,7 +8,7 @@ import { toAppError } from '../../lib/errors'
 import { formatINR } from '../../lib/money'
 import { useAttemptKey } from '../../lib/useAttemptKey'
 import type { Customer, PaymentMethod } from '../../lib/types'
-import { Badge, Button, ErrorBox, Field, Loading, useToast } from '../../components/ui'
+import { Badge, Button, ErrorBox, Field, Loading, useConfirm, useToast } from '../../components/ui'
 import { CustomerPicker } from './CustomerPicker'
 import { FindItemBox } from './FindItemBox'
 import type { FoundItem } from './findItems'
@@ -24,12 +24,14 @@ export function PosPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const attempt = useAttemptKey()
   const me = state.status === 'ready' ? state.profile : null
 
   const [lines, setLines] = useState<CartLine[]>([])
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [scan, setScan] = useState('')
+  const [accessoryChoice, setAccessoryChoice] = useState('')
   const [scanError, setScanError] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [notes, setNotes] = useState('')
@@ -94,6 +96,7 @@ export function PosPage() {
     if (!a) return
     if (lines.some((l) => l.kind === 'accessory' && l.variantId === a.id)) return notify('That accessory is already in the sale. Change its quantity in the cart.', 'bad')
     setLines((ls) => [...ls, accessoryToLine(a)])
+    setAccessoryChoice('')
   }
 
   function addFound(item: FoundItem) {
@@ -132,7 +135,7 @@ export function PosPage() {
     setShowErrors(true)
     setErrors(check.errors)
     if (!check.payload || sell.isPending) return
-    if (window.confirm(`Complete this sale of ${money(totals.totalPaise)} paid by ${PAYMENT_LABEL[method as PaymentMethod]}? The invoice cannot be edited afterwards.`)) sell.mutate()
+    void confirm({ title: 'Complete sale', message: `Complete this sale of ${money(totals.totalPaise)} paid by ${PAYMENT_LABEL[method as PaymentMethod]}? The invoice cannot be edited afterwards.`, confirmLabel: 'Complete sale' }).then((ok) => ok && sell.mutate())
   }
 
   const shown = showErrors ? { ...check.errors, ...errors } : {}
@@ -169,18 +172,23 @@ export function PosPage() {
                 {scanning ? 'Looking up…' : 'Add phone'}
               </Button>
             </form>
-            <Field label="Accessory" hint={accessories.isError ? undefined : 'Accessories are sold by quantity.'} error={accessories.isError ? toAppError(accessories.error).message : undefined}>
-              {(p) => (
-                <select {...p} value="" onChange={(e) => addAccessory(e.target.value)}>
-                  <option value="">{accessories.isPending ? 'Loading…' : 'Choose an accessory in stock…'}</option>
-                  {accessories.data?.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.product?.name} {a.color ?? ''} ({a.sku}) · {a.on_hand} in stock · {formatINR(a.selling_price)}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </Field>
+            <form onSubmit={(e) => { e.preventDefault(); addAccessory(accessoryChoice) }} className="inline-form">
+              <Field label="Accessory" hint={accessories.isError ? undefined : 'Accessories are sold by quantity.'} error={accessories.isError ? toAppError(accessories.error).message : undefined}>
+                {(p) => (
+                  <select {...p} value={accessoryChoice} onChange={(e) => setAccessoryChoice(e.target.value)}>
+                    <option value="">{accessories.isPending ? 'Loading…' : 'Choose an accessory in stock…'}</option>
+                    {accessories.data?.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.product?.name} {a.color ?? ''} ({a.sku}) · {a.on_hand} in stock · {formatINR(a.selling_price)}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
+              <Button type="submit" disabled={!accessoryChoice}>
+                Add accessory
+              </Button>
+            </form>
           </section>
 
           <section className="panel" aria-label="Cart">

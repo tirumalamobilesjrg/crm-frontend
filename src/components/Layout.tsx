@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { watchTables } from './tableCards'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme, type ThemeChoice } from '../lib/theme'
@@ -57,6 +58,8 @@ export function Layout() {
     if (firstPage.current) firstPage.current = false
     else mainRef.current?.focus({ preventScroll: true })
   }, [location.pathname])
+  const ready = state.status === 'ready'
+  useEffect(() => (mainRef.current ? watchTables(mainRef.current) : undefined), [ready])
   if (state.status !== 'ready') return null
   const { profile } = state
   const items = NAV_ITEMS.filter((i) => i.roles.includes(profile.role))

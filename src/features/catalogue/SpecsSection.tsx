@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { addSpec, deleteSpec, listSpecs, updateSpec } from '../../api/productMedia'
 import { toAppError } from '../../lib/errors'
 import type { ProductSpec } from '../../lib/types'
-import { Button, Dialog, ErrorBox, Field, Loading, useToast } from '../../components/ui'
+import { Button, Dialog, ErrorBox, Field, Loading, useConfirm, useToast } from '../../components/ui'
 import { groupSpecs, validateSpec, type SpecForm } from './media'
 
 function SpecDialog({ productId, spec, onClose }: { productId: string; spec: ProductSpec | null; onClose: () => void }) {
@@ -61,6 +61,7 @@ function SpecDialog({ productId, spec, onClose }: { productId: string; spec: Pro
 export function SpecsSection({ productId }: { productId: string }) {
   const qc = useQueryClient()
   const { notify } = useToast()
+  const confirm = useConfirm()
   const [editing, setEditing] = useState<ProductSpec | 'new' | null>(null)
   const specs = useQuery({ queryKey: ['product-specs', productId], queryFn: () => listSpecs(productId) })
   const remove = useMutation({
@@ -101,7 +102,7 @@ export function SpecsSection({ productId }: { productId: string }) {
                     <Button small onClick={() => setEditing(s)} aria-label={`Edit ${s.spec_key}`}>
                       Edit
                     </Button>{' '}
-                    <Button small variant="danger" disabled={remove.isPending} aria-label={`Delete ${s.spec_key}`} onClick={() => window.confirm(`Delete “${s.spec_key}”?`) && remove.mutate(s.id)}>
+                    <Button small variant="danger" disabled={remove.isPending} aria-label={`Delete ${s.spec_key}`} onClick={() => void confirm({ title: 'Delete specification', message: `Delete “${s.spec_key}”?`, confirmLabel: 'Delete', danger: true }).then((ok) => ok && remove.mutate(s.id))}>
                       Delete
                     </Button>
                   </td>
