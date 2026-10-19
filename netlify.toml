@@ -1,0 +1,10 @@
+# Netlify test deployment of the staff CRM. Production target is still Cloudflare Pages (public/_redirects and
+# public/_headers work on both). Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in the Netlify site
+# settings (public values only; never the secret key).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+  NPM_FLAGS = "--legacy-peer-deps=false"
