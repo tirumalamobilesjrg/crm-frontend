@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { findDeviceByIdentifier, finalizeSale, listSellableAccessories, listUsableApprovals } from '../../api/sales'
+import { findDeviceByIdentifier, finalizeSale, listSellableAccessories, listSellableDevices, listUsableApprovals } from '../../api/sales'
 import { listPolicies, listStaff } from '../../api/settings'
 import { useAuth } from '../../auth/AuthProvider'
 import { toAppError } from '../../lib/errors'
@@ -10,6 +10,8 @@ import { useAttemptKey } from '../../lib/useAttemptKey'
 import type { Customer, PaymentMethod } from '../../lib/types'
 import { Badge, Button, ErrorBox, Field, Loading, useToast } from '../../components/ui'
 import { CustomerPicker } from './CustomerPicker'
+import { FindItemBox } from './FindItemBox'
+import type { FoundItem } from './findItems'
 import {
   accessoryToLine, approvalAuthority, cartTotals, deviceToLine, lineAmounts, ownAuthority, PAYMENT_LABEL, PAYMENT_METHODS, sanitizeIdentifier,
   validateSale, type CartLine, type SaleErrors,
@@ -34,7 +36,8 @@ export function PosPage() {
   const [reason, setReason] = useState('')
   const [approvalId, setApprovalId] = useState('')
   const [method, setMethod] = useState<PaymentMethod | ''>('')
-  const [amount, setAmount] = useState<string | null>(null) // null = "same as the total"
+  // A typed amount only counts for the total it was typed against; when the cart or a discount changes the field follows the new total again.
+  const [typedAmount, setTypedAmount] = useState<{ value: string; forTotal: number } | null>(null)
   const [reference, setReference] = useState('')
   const [errors, setErrors] = useState<SaleErrors>({})
   const [showErrors, setShowErrors] = useState(false)
@@ -43,6 +46,7 @@ export function PosPage() {
   const policies = useQuery({ queryKey: ['policies'], queryFn: listPolicies })
   const staff = useQuery({ queryKey: ['staff-names'], queryFn: listStaff, staleTime: 60_000 })
   const accessories = useQuery({ queryKey: ['pos', 'accessories'], queryFn: listSellableAccessories })
+  const devices = useQuery({ queryKey: ['pos', 'devices'], queryFn: listSellableDevices, staleTime: 30_000 })
   const approvals = useQuery({ queryKey: ['pos', 'approvals', me?.user_id], queryFn: () => listUsableApprovals(me!.user_id), enabled: Boolean(me) })
 
   const policy = policies.data?.find((p) => p.role === me?.role) ?? null
@@ -56,7 +60,7 @@ export function PosPage() {
   const totals = cartTotals(lines)
   const own = ownAuthority(lines, policy)
   const needsApproval = totals.discountPaise > 0 && !own.allowed
-  const effectiveAmount = amount ?? (totals.totalPaise / 100).toFixed(2)
+  const effectiveAmount = typedAmount && typedAmount.forTotal === totals.totalPaise ? typedAmount.value : (totals.totalPaise / 100).toFixed(2)
 
   const form = { lines, customerId: customer?.id ?? null, notes, discountReason: reason, approval, policy, approverPolicy, paymentMethod: method, paymentAmount: effectiveAmount, paymentReference: reference }
   const check = validateSale(form)
@@ -90,6 +94,14 @@ export function PosPage() {
     if (!a) return
     if (lines.some((l) => l.kind === 'accessory' && l.variantId === a.id)) return notify('That accessory is already in the sale. Change its quantity in the cart.', 'bad')
     setLines((ls) => [...ls, accessoryToLine(a)])
+  }
+
+  function addFound(item: FoundItem) {
+    setScanError(null)
+    if (item.kind === 'accessory') return addAccessory(item.accessory.id)
+    const r = deviceToLine([item.device], item.device.imei1 ?? item.device.serial_number ?? '', lines)
+    if (r.ok) setLines((ls) => [...ls, r.line])
+    else notify(r.error, 'bad')
   }
 
   const sell = useMutation({
@@ -139,6 +151,14 @@ export function PosPage() {
         <div>
           <section className="panel" aria-label="Add items">
             <h2>Add items</h2>
+            <FindItemBox
+              devices={devices.data ?? []}
+              accessories={accessories.data ?? []}
+              cart={lines}
+              loading={devices.isPending || accessories.isPending}
+              failed={devices.isError}
+              onPick={addFound}
+            />
             <form onSubmit={(e) => void addByScan(e)} className="inline-form">
               <Field label="Scan IMEI or serial number" error={scanError ?? undefined}>
                 {(p) => (
@@ -282,7 +302,7 @@ export function PosPage() {
               )}
             </Field>
             <Field label="Amount received (₹)" error={shown.payment}>
-              {(p) => <input {...p} inputMode="decimal" value={effectiveAmount} onChange={(e) => setAmount(e.target.value)} />}
+              {(p) => <input {...p} inputMode="decimal" value={effectiveAmount} onChange={(e) => setTypedAmount({ value: e.target.value, forTotal: totals.totalPaise })} />}
             </Field>
             <Field label="Reference (optional)" hint="UPI transaction id, cheque number…">
               {(p) => <input {...p} value={reference} maxLength={120} onChange={(e) => setReference(e.target.value)} />}

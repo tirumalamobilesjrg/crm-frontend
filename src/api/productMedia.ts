@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase'
 import { AppError, toAppError } from '../lib/errors'
 import type { ProductImage, ProductSpec } from '../lib/types'
 import { photoPath, validatePhoto } from '../features/catalogue/media'
+import { prepareForUpload } from '../features/catalogue/resize'
 import { run, runChange } from './db'
 
 // Photos live in the public Storage bucket `product-images` (backend migration 0021): public read, only active staff may write,
@@ -36,7 +37,8 @@ export const photoUrl = (storagePath: string): string => supabase.storage.from(B
  * Uploads the file, then registers it. If registering fails the uploaded file is removed again so nothing is left behind.
  * The first photo of a product becomes its primary photo.
  */
-export async function uploadPhoto(productId: string, file: File, alt: string, isFirst: boolean, random: string): Promise<ProductImage> {
+export async function uploadPhoto(productId: string, chosen: File, alt: string, isFirst: boolean, random: string): Promise<ProductImage> {
+  const file = await prepareForUpload(chosen) // shrinks a camera photo to about 1600 px (a few hundred KB) when the browser can
   const problem = validatePhoto(file)
   if (problem) throw new AppError(problem, 'invalid_photo')
   const path = photoPath(productId, file.type, random)

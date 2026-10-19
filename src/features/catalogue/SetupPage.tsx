@@ -48,7 +48,7 @@ function Section(props: {
     <section className="panel">
       <h2>{props.title}</h2>
       <form className="inline-form" onSubmit={submit}>
-        <Field label={`New ${props.title.slice(0, -1).toLowerCase()} name`}>
+        <Field label={`New ${props.title === 'Categories' ? 'category' : props.title.slice(0, -1).toLowerCase()} name`}>
           {(p) => <input {...p} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />}
         </Field>
         <Button type="submit" variant="primary" disabled={add.isPending || name.trim() === ''}>

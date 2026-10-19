@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { InvoiceRow, LineRow } from '../../api/reports'
-import { daysBetween, presetRange, rangeBounds, rupees, summarizeProducts, summarizeProfit, summarizeSales, summarizeStock, toCsv } from './logic'
+import { addDays, daysBetween, shopDate, presetRange, rangeBounds, rupees, summarizeProducts, summarizeProfit, summarizeSales, summarizeStock, toCsv } from './logic'
 
 const inv = (iso: string, total: number, method: 'cash' | 'upi' | 'card' = 'cash', discount = 0): InvoiceRow => ({
   id: iso + total, invoice_number: 'TM/26-27/000001', issued_at: iso, customer_name: 'X', subtotal: total + discount, discount_total: discount, grand_total: total, payments: [{ method }],
@@ -97,5 +97,28 @@ describe('toCsv', () => {
   })
   it('formats rupees from paise', () => {
     expect(rupees(1_234_567)).toBe('12345.67')
+  })
+})
+
+describe('Indian time (IST), whatever the device clock', () => {
+  it('buckets a sale by its IST day: 02:00 IST on the 19th is still the 19th (stored as 20:30Z on the 18th)', () => {
+    expect(shopDate(new Date('2026-10-18T20:30:00Z'))).toBe('2026-10-19')
+    expect(shopDate(new Date('2026-10-18T18:29:59Z'))).toBe('2026-10-18')
+    expect(shopDate(new Date('2026-10-18T18:30:00Z'))).toBe('2026-10-19')
+  })
+  it('presets are calendar dates in IST and the fiscal year starts on 1 April IST', () => {
+    const now = new Date('2027-03-31T19:00:00Z') // 00:30 IST on 1 April 2027
+    expect(presetRange('today', now)).toEqual({ from: '2027-04-01', to: '2027-04-01' })
+    expect(presetRange('fiscal', now)).toEqual({ from: '2027-04-01', to: '2027-04-01' })
+    expect(presetRange('last7', now)).toEqual({ from: '2027-03-26', to: '2027-04-01' })
+    expect(presetRange('lastMonth', now)).toEqual({ from: '2027-03-01', to: '2027-03-31' })
+  })
+  it('range bounds are IST midnight to the last millisecond of the day', () => {
+    expect(rangeBounds('2026-10-19', '2026-10-19')).toEqual({ fromIso: '2026-10-18T18:30:00.000Z', toIso: '2026-10-19T18:29:59.999Z' })
+  })
+  it('date arithmetic does not depend on the machine zone', () => {
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28')
+    expect(addDays('2024-03-01', -1)).toBe('2024-02-29')
+    expect(daysBetween('2026-10-01', '2026-10-31')).toBe(31)
   })
 })

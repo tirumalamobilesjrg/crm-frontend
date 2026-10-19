@@ -8,7 +8,7 @@ import { Button, ErrorBox, Loading } from '../../components/ui'
 import { PAYMENT_LABEL } from '../pos/logic'
 import { summarizeExpenses } from '../expenses/logic'
 import {
-  daysBetween, presetRange, PRESET_LABEL, rangeBounds, rupees, summarizeProducts, summarizeProfit, summarizeSales, summarizeStock, toCsv, type Preset,
+  daysBetween, presetRange, shopDate, PRESET_LABEL, rangeBounds, rupees, summarizeProducts, summarizeProfit, summarizeSales, summarizeStock, toCsv, type Preset,
 } from './logic'
 
 const money = (paise: number) => formatINR(paise / 100)
@@ -114,7 +114,7 @@ export function ReportsPage() {
                 downloadCsv(
                   `sales_${range.from}_to_${range.to}.csv`,
                   toCsv(['Invoice', 'Date', 'Customer', 'Paid by', 'Subtotal', 'Discount', 'Total'],
-                    invoices.data.map((i) => [i.invoice_number, i.issued_at.slice(0, 10), i.customer_name, i.payments[0] ? PAYMENT_LABEL[i.payments[0].method] : '', i.subtotal, i.discount_total, i.grand_total])),
+                    invoices.data.map((i) => [i.invoice_number, shopDate(new Date(i.issued_at)), i.customer_name, i.payments[0] ? PAYMENT_LABEL[i.payments[0].method] : '', i.subtotal, i.discount_total, i.grand_total])),
                 )
               }
             >

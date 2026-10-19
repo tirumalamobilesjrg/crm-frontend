@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createVariant, getProduct, listVariants, updateVariant } from '../../api/catalogue'
+import { useAuth } from '../../auth/AuthProvider'
 import { toAppError } from '../../lib/errors'
 import { formatINR } from '../../lib/money'
 import type { Variant } from '../../lib/types'
@@ -129,8 +130,11 @@ export function ProductDetailPage() {
   const { id = '' } = useParams()
   // Arriving straight from "Create product" opens the Add variant dialog so the product is never left without one.
   const location = useLocation()
+  // Prices (MRP, selling price, website price) are set by an Admin only (database rule, migration 0024), so only an Admin gets the buttons.
+  const { state: auth } = useAuth()
+  const isAdmin = auth.status === 'ready' && auth.profile.role === 'admin'
   const [editing, setEditing] = useState<Variant | 'new' | null>(() =>
-    (location.state as { addVariant?: boolean } | null)?.addVariant ? 'new' : null,
+    isAdmin && (location.state as { addVariant?: boolean } | null)?.addVariant ? 'new' : null,
   )
   const product = useQuery({ queryKey: ['product', id], queryFn: () => getProduct(id) })
   const variants = useQuery({ queryKey: ['variants', id], queryFn: () => listVariants(id) })
@@ -156,10 +160,13 @@ export function ProductDetailPage() {
       <section className="panel">
         <div className="page-head">
           <h2>Variants</h2>
-          <Button variant="primary" onClick={() => setEditing('new')}>
-            Add variant
-          </Button>
+          {isAdmin && (
+            <Button variant="primary" onClick={() => setEditing('new')}>
+              Add variant
+            </Button>
+          )}
         </div>
+        {!isAdmin && <p className="muted">Only an Admin can add variants or change prices. Ask an Admin if a variant or price needs to change.</p>}
         {variants.isPending && <Loading />}
         {variants.isError && <ErrorBox error={variants.error} retry={() => void variants.refetch()} />}
         {variants.data && (
@@ -194,9 +201,11 @@ export function ProductDetailPage() {
                   <td className="right">{v.public_price === null ? <span className="muted">contact shop</span> : formatINR(v.public_price)}</td>
                   <td>{v.is_active ? <Badge tone="good">Active</Badge> : <Badge tone="warn">Inactive</Badge>}</td>
                   <td className="right">
-                    <Button small onClick={() => setEditing(v)}>
-                      Edit
-                    </Button>
+                    {isAdmin && (
+                      <Button small onClick={() => setEditing(v)}>
+                        Edit
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}

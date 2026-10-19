@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { countDraftPurchases, loadDashboardCounts } from '../../api/dashboard'
@@ -9,7 +9,7 @@ import { useAuth } from '../../auth/AuthProvider'
 import { Icon } from '../../components/icons'
 import { Badge, EmptyState, ErrorBox, Loading } from '../../components/ui'
 import { formatINR } from '../../lib/money'
-import { presetRange, rangeBounds, summarizeSales } from '../reports/logic'
+import { presetRange, rangeBounds, shopDate, summarizeSales } from '../reports/logic'
 import { PAYMENT_LABEL } from '../pos/logic'
 
 const money = (paise: number) => formatINR(paise / 100)
@@ -34,7 +34,13 @@ function WeekStrip({ series }: { series: Array<{ label: string; paise: number }>
 export function DashboardPage() {
   const { state } = useAuth()
   const name = state.status === 'ready' ? state.profile.full_name : ''
-  const range = useMemo(() => presetRange('last7'), [])
+  // "Today" follows the clock: a counter PC left open overnight must not keep showing yesterday.
+  const [day, setDay] = useState(() => shopDate(new Date()))
+  useEffect(() => {
+    const t = setInterval(() => setDay(shopDate(new Date())), 60_000)
+    return () => clearInterval(t)
+  }, [])
+  const range = useMemo(() => presetRange('last7', new Date(`${day}T12:00:00+05:30`)), [day])
   const counts = useQuery({ queryKey: ['dashboard'], queryFn: loadDashboardCounts })
   const week = useQuery({
     queryKey: ['reports', 'dashboard-week', range],
@@ -51,7 +57,7 @@ export function DashboardPage() {
   const sales = useMemo(() => (week.data ? summarizeSales(week.data, range.from, range.to) : null), [week.data, range])
   const todayBucket = sales?.series[sales.series.length - 1]
   const todayDiscount = week.data
-    ? week.data.filter((i) => new Date(i.issued_at).toDateString() === new Date().toDateString()).reduce((n, i) => n + Math.round(i.discount_total * 100), 0)
+    ? week.data.filter((i) => shopDate(new Date(i.issued_at)) === day).reduce((n, i) => n + Math.round(i.discount_total * 100), 0)
     : 0
 
   const outOfStock = (accessories.data ?? []).filter((a) => a.is_active && a.on_hand === 0).length

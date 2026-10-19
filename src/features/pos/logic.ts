@@ -38,7 +38,7 @@ export type CartLine = DeviceLine | AccessoryLine
 
 const rupees = (n: number): string => String(n)
 
-function title(v: { sku: string; color?: string | null; ram_gb?: number | null; storage_gb?: number | null; product: { name: string; brand: { name: string } | null } | null }): string {
+export function title(v: { sku: string; color?: string | null; ram_gb?: number | null; storage_gb?: number | null; product: { name: string; brand: { name: string } | null } | null }): string {
   const spec = [v.color, v.ram_gb ? `${v.ram_gb}GB RAM` : null, v.storage_gb ? `${v.storage_gb}GB` : null].filter(Boolean).join(' ')
   return `${v.product?.brand?.name ? v.product.brand.name + ' ' : ''}${v.product?.name ?? ''}${spec ? ' ' + spec : ''}`.trim() || v.sku
 }
@@ -89,6 +89,7 @@ export function lineAmounts(line: CartLine): LineAmounts {
   const pricePaise = price !== null && price > 0 ? toPaise(price) : null
   if (pricePaise === null) errors.unitPrice = 'Enter the selling price in rupees (at most 2 decimals).'
   else if (pricePaise > toPaise(line.mrp)) errors.unitPrice = `Above the MRP of ₹${line.mrp}. The database will not allow it.`
+  else if (pricePaise < toPaise(line.selling)) errors.unitPrice = `Below the selling price of ₹${line.selling}. To sell for less, enter the reduction in the Discount box.`
 
   let qty: number | null = 1
   if (line.kind === 'accessory') {

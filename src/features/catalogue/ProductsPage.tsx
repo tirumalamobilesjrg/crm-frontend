@@ -2,15 +2,18 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createProduct, listBrands, listCategories, listProducts, setPublished } from '../../api/catalogue'
-import { slugify } from '../../lib/slug'
+import { productSlug } from '../../lib/slug'
 import { toAppError } from '../../lib/errors'
 import { Badge, Button, Dialog, ErrorBox, Field, Loading, useToast } from '../../components/ui'
+import { useAuth } from '../../auth/AuthProvider'
 import { validateProduct, type ProductForm } from './validation'
 
 function NewProductDialog({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { notify } = useToast()
+  const { state: auth } = useAuth()
+  const role = auth.status === 'ready' ? auth.profile.role : null
   const brands = useQuery({ queryKey: ['brands'], queryFn: listBrands })
   const categories = useQuery({ queryKey: ['categories'], queryFn: listCategories })
   const [form, setForm] = useState<ProductForm>({ name: '', brand_id: '', category_id: '', description: '' })
@@ -22,11 +25,11 @@ function NewProductDialog({ onClose }: { onClose: () => void }) {
         brand_id: form.brand_id,
         category_id: form.category_id,
         name: form.name.trim(),
-        slug: slugify(`${brands.data?.find((b) => b.id === form.brand_id)?.name ?? ''} ${form.name}`),
+        slug: productSlug(brands.data?.find((b) => b.id === form.brand_id)?.name ?? '', form.name),
         description: form.description.trim() === '' ? null : form.description.trim(),
       }),
     onSuccess: (p) => {
-      notify('Product created. Add its variants next.')
+      notify(role === 'admin' ? 'Product created. Add its variants next.' : 'Product created. An Admin must add its variants and prices.')
       void qc.invalidateQueries({ queryKey: ['products'] })
       navigate(`/catalogue/products/${p.id}`, { state: { addVariant: true } })
     },

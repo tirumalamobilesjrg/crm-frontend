@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme, type ThemeChoice } from '../lib/theme'
@@ -47,6 +47,16 @@ export function Layout() {
   const setOpen = (v: boolean) => setOpenAt(v ? location.pathname : null)
   const rail = useRef<HTMLElement>(null)
   useFocusTrap(rail, open, () => setOpen(false))
+  // Each page gets its own tab title, and keyboard / screen-reader focus moves to the new page's content after a navigation.
+  const mainRef = useRef<HTMLElement>(null)
+  const firstPage = useRef(true)
+  useEffect(() => {
+    const path = location.pathname
+    const item = [...NAV_ITEMS].sort((a, b) => b.to.length - a.to.length).find((i) => (i.end ? path === i.to : path === i.to || path.startsWith(`${i.to}/`)))
+    document.title = `${item?.label ?? 'Page'} – Tirumala Mobiles CRM`
+    if (firstPage.current) firstPage.current = false
+    else mainRef.current?.focus({ preventScroll: true })
+  }, [location.pathname])
   if (state.status !== 'ready') return null
   const { profile } = state
   const items = NAV_ITEMS.filter((i) => i.roles.includes(profile.role))
@@ -59,6 +69,7 @@ export function Layout() {
 
   return (
     <div className="shell">
+      <a className="skip-link" href="#content">Skip to content</a>
       <header className="topbar">
         <button className="icon-btn" aria-label="Open menu" aria-expanded={open} aria-controls="main-nav" onClick={() => setOpen(true)}>
           <Icon name="menu" size={22} />
@@ -109,7 +120,7 @@ export function Layout() {
         </div>
       </aside>
       <div className="main">
-        <main className="content">
+        <main className="content" id="content" tabIndex={-1} ref={mainRef}>
           <Outlet />
         </main>
       </div>

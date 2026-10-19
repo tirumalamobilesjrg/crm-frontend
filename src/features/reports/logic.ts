@@ -4,8 +4,17 @@ import type { InvoiceRow, LineRow, StockAccessoryRow, StockDeviceRow } from '../
 
 // All aggregation happens in integer paise so totals match the invoices exactly.
 
-const pad = (n: number) => String(n).padStart(2, '0')
-export const isoDate = (d: Date): string => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+// The shop works in Indian time. Day boundaries, "today", the financial year and the CSV date all use IST, whatever the
+// clock or time zone of the device that opens the report (a laptop set to UTC must not shift a sale to the wrong day).
+export const SHOP_TIME_ZONE = 'Asia/Kolkata'
+const shopDay = new Intl.DateTimeFormat('en-CA', { timeZone: SHOP_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' })
+/** The shop's calendar date (YYYY-MM-DD, IST) of an instant. */
+export const shopDate = (d: Date): string => shopDay.format(d)
+export const isoDate = shopDate
+const utcMs = (iso: string): number => Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)))
+/** Calendar arithmetic on YYYY-MM-DD strings, free of any time zone. */
+export const addDays = (iso: string, n: number): string => new Date(utcMs(iso) + n * 86_400_000).toISOString().slice(0, 10)
+const monthStartOf = (iso: string): string => `${iso.slice(0, 7)}-01`
 
 export type Preset = 'today' | 'last7' | 'month' | 'lastMonth' | 'fiscal' | 'custom'
 export const PRESET_LABEL: Record<Preset, string> = {
@@ -14,26 +23,22 @@ export const PRESET_LABEL: Record<Preset, string> = {
 
 /** Calendar dates (YYYY-MM-DD, the shop's local time) for a preset. */
 export function presetRange(preset: Exclude<Preset, 'custom'>, now = new Date()): { from: string; to: string } {
-  const today = isoDate(now)
+  const today = shopDate(now)
   switch (preset) {
     case 'today': return { from: today, to: today }
-    case 'last7': { const d = new Date(now); d.setDate(d.getDate() - 6); return { from: isoDate(d), to: today } }
-    case 'month': return { from: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`, to: today }
-    case 'lastMonth': {
-      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const last = new Date(now.getFullYear(), now.getMonth(), 0)
-      return { from: isoDate(first), to: isoDate(last) }
-    }
-    case 'fiscal': { const y = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1; return { from: `${y}-04-01`, to: today } }
+    case 'last7': return { from: addDays(today, -6), to: today }
+    case 'month': return { from: monthStartOf(today), to: today }
+    case 'lastMonth': { const thisMonth = monthStartOf(today); return { from: monthStartOf(addDays(thisMonth, -1)), to: addDays(thisMonth, -1) } }
+    case 'fiscal': { const y = Number(today.slice(0, 4)); const fy = Number(today.slice(5, 7)) >= 4 ? y : y - 1; return { from: `${fy}-04-01`, to: today } }
   }
 }
 
-/** Instants covering the whole of both days in local time (inclusive). */
+/** Instants covering the whole of both days in Indian time (inclusive). */
 export function rangeBounds(from: string, to: string): { fromIso: string; toIso: string } {
-  return { fromIso: new Date(`${from}T00:00:00`).toISOString(), toIso: new Date(`${to}T23:59:59.999`).toISOString() }
+  return { fromIso: new Date(`${from}T00:00:00+05:30`).toISOString(), toIso: new Date(`${to}T23:59:59.999+05:30`).toISOString() }
 }
 
-export const daysBetween = (from: string, to: string): number => Math.round((new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 86_400_000) + 1
+export const daysBetween = (from: string, to: string): number => Math.round((utcMs(to) - utcMs(from)) / 86_400_000) + 1
 
 // ---- sales
 
@@ -51,14 +56,12 @@ export interface SalesSummary {
 /** Days when the range is up to 62 days, otherwise months; empty periods are included as zero. */
 export function summarizeSales(invoices: InvoiceRow[], from: string, to: string): SalesSummary {
   const granularity = daysBetween(from, to) <= 62 ? 'day' : 'month'
-  const key = (iso: string) => (granularity === 'day' ? isoDate(new Date(iso)) : isoDate(new Date(iso)).slice(0, 7))
+  const key = (iso: string) => (granularity === 'day' ? shopDate(new Date(iso)) : shopDate(new Date(iso)).slice(0, 7))
   const buckets = new Map<string, { count: number; paise: number }>()
-  const end = new Date(`${to}T00:00:00`)
   if (granularity === 'day') {
-    for (const d = new Date(`${from}T00:00:00`); d <= end; d.setDate(d.getDate() + 1)) buckets.set(isoDate(d), { count: 0, paise: 0 })
+    for (let d = from; d <= to; d = addDays(d, 1)) buckets.set(d, { count: 0, paise: 0 })
   } else {
-    const first = new Date(`${from}T00:00:00`)
-    for (const d = new Date(first.getFullYear(), first.getMonth(), 1); d <= end; d.setMonth(d.getMonth() + 1)) buckets.set(isoDate(d).slice(0, 7), { count: 0, paise: 0 })
+    for (let m = monthStartOf(from); m <= to; m = addDays(m.slice(0, 7) + '-28', 4).slice(0, 7) + '-01') buckets.set(m.slice(0, 7), { count: 0, paise: 0 })
   }
 
   let subtotal = 0, discount = 0, net = 0

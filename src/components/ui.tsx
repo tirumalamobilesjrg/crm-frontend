@@ -150,13 +150,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const notify = useCallback((text: string, tone: 'good' | 'bad' = 'good') => {
     const id = Date.now() + Math.random()
     setToasts((t) => [...t, { id, tone, text }].slice(-MAX_TOASTS))
-    setTimeout(() => dismiss(id), tone === 'bad' ? 8000 : 3500)
+    // Failures stay long enough to be read (12 s, and they have a dismiss button); success fades after 6 s.
+    setTimeout(() => dismiss(id), tone === 'bad' ? 12_000 : 6000)
   }, [dismiss])
   const value = useMemo(() => ({ notify }), [notify])
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="toasts" aria-live="polite">
+      <div className="toasts">
         {toasts.map((t) => (
           <div key={t.id} className={`toast toast-${t.tone}`} role={t.tone === 'bad' ? 'alert' : 'status'}>
             <Icon name={t.tone === 'bad' ? 'alert' : 'check'} size={18} />

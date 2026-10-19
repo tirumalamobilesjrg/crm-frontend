@@ -4,7 +4,7 @@ import { deletePhoto, listImages, photoUrl, setPrimaryPhoto, swapPhotoOrder, upd
 import { toAppError } from '../../lib/errors'
 import type { ProductImage } from '../../lib/types'
 import { Badge, Button, ErrorBox, Loading, useToast } from '../../components/ui'
-import { MAX_BATCH, MAX_PHOTO_BYTES, PHOTO_TYPES, sortImages, validateAlt, validatePhoto } from './media'
+import { MAX_BATCH, MAX_INPUT_BYTES, PHOTO_TYPES, sortImages, validateAlt, validateChosen } from './media'
 
 function PhotoCard({ image, index, total, all, productId }: { image: ProductImage; index: number; total: number; all: ProductImage[]; productId: string }) {
   const qc = useQueryClient()
@@ -31,7 +31,7 @@ function PhotoCard({ image, index, total, all, productId }: { image: ProductImag
         {image.is_primary && <Badge tone="good">Main photo</Badge>}
         <label className="field">
           <span className="sr-only">Description of photo {index + 1}</span>
-          <input aria-label={`Description of photo ${index + 1}`} value={alt} maxLength={200} placeholder="Describe the photo (helps search engines)" onChange={(e) => setAlt(e.target.value)} aria-invalid={Boolean(altProblem)} />
+          <input aria-label={`Description of photo ${index + 1}`} value={alt} maxLength={200} placeholder="Describe the photo for people who cannot see it" onChange={(e) => setAlt(e.target.value)} aria-invalid={Boolean(altProblem)} />
         </label>
         {altProblem && <small className="field-error" role="alert">{altProblem}</small>}
         <div className="photo-actions">
@@ -79,8 +79,8 @@ export function PhotosSection({ productId }: { productId: string }) {
   function choose(e: ChangeEvent<HTMLInputElement>) {
     const all = Array.from(e.target.files ?? [])
     const picked = all.slice(0, MAX_BATCH)
-    setItems(picked.map((file) => ({ id: nextId.current++, file, problem: validatePhoto(file), status: 'ready' as const })))
-    setProblem(all.length > MAX_BATCH ? `Only the first ${MAX_BATCH} photos were kept. Upload them, then add the rest.` : picked.length === 1 ? validatePhoto(picked[0]!) : null)
+    setItems(picked.map((file) => ({ id: nextId.current++, file, problem: validateChosen(file), status: 'ready' as const })))
+    setProblem(all.length > MAX_BATCH ? `Only the first ${MAX_BATCH} photos were kept. Upload them, then add the rest.` : picked.length === 1 ? validateChosen(picked[0]!) : null)
   }
 
   async function submit(e: FormEvent) {
@@ -122,7 +122,7 @@ export function PhotosSection({ productId }: { productId: string }) {
     <section className="panel" aria-label="Photos">
       <h2>Photos</h2>
       <p className="muted">
-        Photos are public: they appear on the website once the product is published. JPEG, PNG or WebP, up to {MAX_PHOTO_BYTES / 1024 / 1024} MB each. You can choose up to {MAX_BATCH} photos at once. The main photo is shown first.
+        Photos are public: they appear on the website once the product is published. JPEG, PNG or WebP, up to {MAX_INPUT_BYTES / 1024 / 1024} MB each; big camera photos are shrunk automatically. You can choose up to {MAX_BATCH} photos at once. The main photo is shown first.
       </p>
       <form onSubmit={(e) => void submit(e)} className="photo-upload" noValidate>
         <label className="field">

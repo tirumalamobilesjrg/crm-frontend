@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { toAppError } from '../lib/errors'
 import type { StaffProfile } from '../lib/types'
@@ -35,6 +36,7 @@ async function loadState(session: Session | null): Promise<AuthState> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: 'loading' })
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     let cancelled = false
@@ -46,7 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     }
     void supabase.auth.getSession().then(({ data }) => apply(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // Nothing one person loaded (customers, staff, approvals) may linger for the next person on a shared counter PC.
+      if (event === 'SIGNED_OUT') queryClient.clear()
       // Defer: calling Supabase from inside this callback can deadlock the auth client.
       setTimeout(() => apply(session), 0)
     })
@@ -54,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true
       sub.subscription.unsubscribe()
     }
-  }, [])
+  }, [queryClient])
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
@@ -63,8 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
+    queryClient.clear()
     setState({ status: 'signedOut' })
-  }, [])
+  }, [queryClient])
 
   const value = useMemo(() => ({ state, signIn, signOut }), [state, signIn, signOut])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

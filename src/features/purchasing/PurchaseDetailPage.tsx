@@ -12,6 +12,7 @@ import {
 } from '../../api/purchasing'
 import { toAppError } from '../../lib/errors'
 import { newIdempotencyKey } from '../../lib/idempotency'
+import { useStoredValues } from '../../lib/useStoredValues'
 import { formatINR } from '../../lib/money'
 import type { PurchaseLine } from '../../lib/types'
 import { Badge, Button, ErrorBox, Field, Loading, useToast } from '../../components/ui'
@@ -147,7 +148,7 @@ export function PurchaseDetailPage() {
   const { notify } = useToast()
   const purchase = useQuery({ queryKey: ['purchase', id], queryFn: () => getPurchase(id) })
   const lines = useQuery({ queryKey: ['purchase-lines', id], queryFn: () => listPurchaseLines(id) })
-  const [values, setValues] = useState<Record<string, string>>({})
+  const [values, setValues, clearValues] = useStoredValues(`receive-units:${id}`)
   const [showMissing, setShowMissing] = useState(false)
   // One key per attempt: a retry of the same units reuses it (the server replays instead of duplicating);
   // changing any IMEI makes it a different request, so it gets a fresh key.
@@ -183,6 +184,7 @@ export function PurchaseDetailPage() {
     },
     onSuccess: (r) => {
       attempt.current = null
+      clearValues()
       notify(`Stock received: ${r.units_received} phone(s) and ${r.quantity_units_received} accessory unit(s).`)
       void qc.invalidateQueries({ queryKey: ['purchase', id] })
       void qc.invalidateQueries({ queryKey: ['purchase-lines', id] })
@@ -320,7 +322,7 @@ export function PurchaseDetailPage() {
           </div>
         </section>
       )}
-      {p.status === 'received' && <p className="muted">Received {p.received_at ? new Date(p.received_at).toLocaleString() : ''}. View the stock under Inventory once that screen exists.</p>}
+      {p.status === 'received' && <p className="muted">Received {p.received_at ? new Date(p.received_at).toLocaleString() : ''}. <Link to="/inventory">Open Inventory</Link> to see the new stock.</p>}
     </div>
   )
 }

@@ -115,8 +115,8 @@ export function InvoicePage() {
               {p.reference ? ` (ref. ${p.reference})` : ''} <span className="muted">· recorded manually</span>
             </p>
           ))}
-          {inv.sale?.discount_reason && <p className="muted">Discount reason: {inv.sale.discount_reason}</p>}
-          {inv.sale?.notes && <p className="muted">Notes: {inv.sale.notes}</p>}
+          {inv.sale?.discount_reason && <p className="muted no-print">Discount reason: {inv.sale.discount_reason}</p>}
+          {inv.sale?.notes && <p className="muted no-print">Notes: {inv.sale.notes}</p>}
           {soldBy && <p className="muted">Served by {soldBy}</p>}
         </section>
         <footer className="invoice-foot">This is a sale receipt. It carries no tax breakdown.</footer>

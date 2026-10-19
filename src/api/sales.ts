@@ -20,6 +20,10 @@ export const findDeviceByIdentifier = (term: string) =>
     supabase.from('inventory_items').select(DEVICE_COLUMNS).or(`imei1.eq.${term},imei2.eq.${term},serial_number.eq.${term.toUpperCase()}`).limit(2) as never,
   )
 
+/** Every phone that is in stock (a single shop holds hundreds at most), for the type-to-find box. Capped by the API at 1000. */
+export const listSellableDevices = () =>
+  run<SellableDevice[]>(supabase.from('inventory_items').select(DEVICE_COLUMNS).eq('status', 'in_stock').order('imei1').limit(1000) as never)
+
 interface AccessoryRaw {
   id: string
   sku: string

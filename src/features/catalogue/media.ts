@@ -1,7 +1,8 @@
 import type { ProductImage, ProductSpec } from '../../lib/types'
 
 // Mirrors the bucket rules (migration 0021). Storage enforces them again; this gives instant, specific feedback.
-export const MAX_PHOTO_BYTES = 2 * 1024 * 1024
+export const MAX_PHOTO_BYTES = 2 * 1024 * 1024 // what is stored (after the browser has shrunk the photo)
+export const MAX_INPUT_BYTES = 15 * 1024 * 1024 // what staff may pick: a full camera photo
 export const MAX_BATCH = 10 // photos per upload; they are sent one at a time
 export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
 const EXTENSION: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
@@ -11,6 +12,15 @@ export function validatePhoto(file: { type: string; size: number } | null): stri
   if (!(PHOTO_TYPES as readonly string[]).includes(file.type)) return 'Use a JPEG, PNG or WebP photo.'
   if (file.size <= 0) return 'That file is empty.'
   if (file.size > MAX_PHOTO_BYTES) return 'That photo is larger than 2 MB. Shrink it or save it at a lower quality.'
+  return null
+}
+
+/** The photo as chosen, before it is shrunk: any JPEG/PNG/WebP up to 15 MB. */
+export function validateChosen(file: { type: string; size: number } | null): string | null {
+  if (!file) return 'Choose a photo first.'
+  if (!(PHOTO_TYPES as readonly string[]).includes(file.type)) return 'Use a JPEG, PNG or WebP photo.'
+  if (file.size <= 0) return 'That file is empty.'
+  if (file.size > MAX_INPUT_BYTES) return 'That photo is larger than 15 MB. Take it again at a lower quality.'
   return null
 }
 
