@@ -20,7 +20,7 @@ const caseLine = (over: Partial<AccessoryLine> = {}): AccessoryLine => ({ ...acc
 const manager = { can_discount: true, max_percent: 5, max_amount: null }
 const noAllowance = { can_discount: false, max_percent: 0, max_amount: null }
 const approval = (over: Partial<DiscountApproval> = {}): DiscountApproval => ({
-  id: 'ap1', requested_for: 'u1', approved_by: 'admin', max_amount: 1500, reason: 'Festival', expires_at: new Date(Date.now() + 600_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: '', ...over,
+  id: 'ap1', requested_for: 'u1', approved_by: 'admin', max_amount: 1500, reason: 'Festival', expires_at: new Date(Date.now() + 600_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: '', inventory_item_id: 'd1', variant_id: null, ...over,
 })
 const form = (over: Partial<SaleForm>): SaleForm => ({
   lines: [phone()], customerId: null, notes: '', discountReason: '', approval: null, policy: noAllowance, approverPolicy: null, paymentMethod: 'cash', paymentAmount: '19000.00', paymentReference: '', ...over,
@@ -99,6 +99,22 @@ describe('discount authority', () => {
     expect(approvalAuthority([phone({ discount: '1500.01' })], approval(), null).why).toMatch(/above the approved/)
     expect(approvalAuthority(l, approval({ used_at: '2026-10-18' }), null).why).toMatch(/already used/)
     expect(approvalAuthority(l, approval({ expires_at: new Date(Date.now() - 1000).toISOString() }), null).why).toMatch(/expired/)
+  })
+  it('an approval is for ONE item: other items, no discount on its item and old unbound approvals are refused', () => {
+    expect(approvalAuthority([phone({ itemId: 'd2', key: 'd:d2', discount: '1000' })], approval(), null).why).toMatch(/different item/)
+    expect(approvalAuthority([phone({ discount: '' })], approval(), null).why).toMatch(/has no discount/)
+    expect(approvalAuthority([phone({ discount: '1000' })], approval({ inventory_item_id: null, variant_id: null }), null).why).toMatch(/not tied to an item/)
+  })
+  it('an accessory approval matches the accessory product, not a phone', () => {
+    const forCase = approval({ inventory_item_id: null, variant_id: 'a1' })
+    expect(approvalAuthority([caseLine({ quantity: '2', discount: '100' })], forCase, null).allowed).toBe(true)
+    expect(approvalAuthority([phone({ discount: '100' })], forCase, null).why).toMatch(/different item/)
+  })
+  it("the approval does not cover a discount on a second item: that must fit the seller's own allowance", () => {
+    const two = [phone({ discount: '1500' }), caseLine({ quantity: '1', discount: '40' })]
+    expect(approvalAuthority(two, approval(), null, noAllowance)).toMatchObject({ allowed: false, why: expect.stringMatching(/covers only its own item/) })
+    expect(approvalAuthority(two, approval(), null, { can_discount: true, max_percent: 10, max_amount: null }).allowed).toBe(true) // 40 is 10 % of 400
+    expect(approvalAuthority(two, approval(), null, { can_discount: true, max_percent: 5, max_amount: null }).allowed).toBe(false)
   })
   it("an approval is also bound by the approver's own limits", () => {
     const l = [phone({ discount: '1500' })]
@@ -188,7 +204,10 @@ describe('inputs', () => {
     expect(validateCustomer({ name: 'A', phone: '+919876543210', email: 'a@b.co', address: 'x' }).value?.phone).toBe('+919876543210')
   })
   it('validates an approval grant', () => {
-    expect(Object.keys(validateApproval({ requestedFor: '', amount: '0', reason: 'x', minutes: '500' }).errors).sort()).toEqual(['amount', 'minutes', 'reason', 'requestedFor'])
-    expect(validateApproval({ requestedFor: 'u1', amount: '1,500', reason: 'Festival', minutes: '15' }).value).toEqual({ requestedFor: 'u1', maxAmount: 1500, reason: 'Festival', validMinutes: 15 })
+    expect(Object.keys(validateApproval({ requestedFor: '', amount: '0', reason: 'x', minutes: '500', target: null }).errors).sort()).toEqual(['amount', 'minutes', 'reason', 'requestedFor', 'target'])
+    expect(validateApproval({ requestedFor: 'u1', amount: '1,500', reason: 'Festival', minutes: '15', target: { kind: 'device', id: 'd1', label: 'Nova X1' } }).value)
+      .toEqual({ requestedFor: 'u1', maxAmount: 1500, reason: 'Festival', validMinutes: 15, inventoryItemId: 'd1' })
+    expect(validateApproval({ requestedFor: 'u1', amount: '400', reason: 'Two cases', minutes: '15', target: { kind: 'accessory', id: 'v9', label: 'Case' } }).value)
+      .toEqual({ requestedFor: 'u1', maxAmount: 400, reason: 'Two cases', validMinutes: 15, variantId: 'v9' })
   })
 })

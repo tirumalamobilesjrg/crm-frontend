@@ -377,7 +377,7 @@ try {
   await scanBox.press('Enter')
   await page.getByLabel('Discount for NOVA-X1-8-128').fill('100')
   await page.getByText('Needs an Admin approval').waitFor({ timeout: 5000 })
-  check('the approval was single-use: the manager has none left to choose', await page.getByText('You have no unused approval. Ask an Admin to grant one.').isVisible())
+  check('the approval was single-use: the manager has none left to choose', await page.getByText('You have no unused approval. Ask an Admin to grant one for this item.').isVisible())
   acceptDialogs = false
 
   // 3e. customers, expenses, reports (manager)
@@ -568,9 +568,12 @@ try {
   await page.getByRole('link', { name: 'Discount approvals' }).click()
   await page.getByRole('heading', { name: 'Discount approvals' }).waitFor({ timeout: 5000 })
   await page.getByRole('button', { name: 'Grant approval' }).click()
-  check('the approval form validates its fields', (await page.getByText('Choose who the approval is for.').isVisible()) && (await page.getByText(/Enter the largest total discount/).isVisible()))
+  check('the approval form validates its fields', (await page.getByText('Choose who the approval is for.').isVisible()) && (await page.getByText(/Enter the largest discount you allow on this item/).isVisible()) && (await page.getByText('Choose the phone or accessory this approval is for.').isVisible()))
   await page.getByLabel('For', { exact: true }).selectOption({ label: 'Mohan Manager (manager)' })
-  await page.getByLabel('Largest total discount (₹)').fill('1000')
+  await page.getByLabel(/Find the phone or accessory/).fill('87000000000')
+  await page.getByRole('list', { name: 'Matching items' }).getByRole('button').first().click()
+  check('the approval is for one chosen phone', await page.getByText('Approved item').isVisible())
+  await page.getByLabel('Largest discount on this item (₹)').fill('1000')
   await page.getByLabel('Reason', { exact: true }).fill('Bulk purchase')
   await page.getByRole('button', { name: 'Grant approval' }).click()
   await page.getByText(/Confirmed by the server: approval granted/).waitFor({ timeout: 5000 })

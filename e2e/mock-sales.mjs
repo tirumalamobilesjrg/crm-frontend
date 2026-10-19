@@ -12,7 +12,7 @@ const now = () => new Date().toISOString()
 
 export const customers = []
 export const approvals = [
-  { id: 'ap-seed', requested_for: MANAGER_ID, approved_by: ADMIN_ID, max_amount: 1500, reason: 'Festival offer', expires_at: new Date(Date.now() + 3_600_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: now() },
+  { id: 'ap-seed', requested_for: MANAGER_ID, approved_by: ADMIN_ID, max_amount: 1500, reason: 'Festival offer', expires_at: new Date(Date.now() + 3_600_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: now(), inventory_item_id: devices[2]?.id ?? null, variant_id: null },
 ]
 export const sales = [] // {sale, invoice, items, payment}
 export const finalizeLog = [] // {key, attempt}
@@ -100,7 +100,8 @@ export function handleSales({ table, req, url, payload, json, res, wantsObject, 
     if (payload.p_requested_for === me.id) return fail(json, 'TM005', 400, 'an approval must be granted to a different user')
     if (!(payload.p_max_amount > 0)) return fail(json, 'TM003', 400, 'approved amount must be positive with at most 2 decimals')
     if (String(payload.p_reason ?? '').trim().length < 3) return fail(json, 'TM003', 400, 'a reason is required')
-    const a = { id: randomUUID(), requested_for: payload.p_requested_for, approved_by: me.id, max_amount: payload.p_max_amount, reason: payload.p_reason.trim(), expires_at: new Date(Date.now() + payload.p_valid_minutes * 60_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: now() }
+    if ((payload.p_inventory_item_id == null) === (payload.p_variant_id == null)) return fail(json, 'TM003', 400, 'an approval is for exactly one item: a phone (inventory_item_id) or an accessory product (variant_id)')
+    const a = { inventory_item_id: payload.p_inventory_item_id ?? null, variant_id: payload.p_variant_id ?? null, id: randomUUID(), requested_for: payload.p_requested_for, approved_by: me.id, max_amount: payload.p_max_amount, reason: payload.p_reason.trim(), expires_at: new Date(Date.now() + payload.p_valid_minutes * 60_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: now() }
     approvals.push(a)
     json(200, { approval_id: a.id, expires_at: a.expires_at, replayed: false })
     return true
@@ -152,7 +153,12 @@ export function handleSales({ table, req, url, payload, json, res, wantsObject, 
         if (!approval || approval.requested_for !== me.id) return fail(json, 'TM005', 400, 'discount approval not found for this user')
         if (approval.used_at) return fail(json, 'TM005', 400, 'discount approval was already used')
         if (new Date(approval.expires_at) <= new Date()) return fail(json, 'TM005', 400, 'discount approval has expired')
-        if (discount > Math.round(approval.max_amount * 100)) return fail(json, 'TM005', 400, `discount ${(discount / 100).toFixed(2)} exceeds the approved amount ${approval.max_amount}`)
+        const isBound = (l) => (approval.inventory_item_id && l.device?.id === approval.inventory_item_id) || (approval.variant_id && !l.device && l.variant.id === approval.variant_id)
+        if (!lines.some(isBound)) return fail(json, 'TM005', 400, 'this discount approval is for a different item than the ones in this sale')
+        const bound = lines.filter(isBound).reduce((n, l) => n + l.disc, 0)
+        if (bound <= 0) return fail(json, 'TM005', 400, 'the item this approval is for has no discount in this sale')
+        if (bound > Math.round(approval.max_amount * 100)) return fail(json, 'TM005', 400, `discount ${(bound / 100).toFixed(2)} on the approved item exceeds the approved amount ${approval.max_amount}`)
+        if (discount - bound > 0) return fail(json, 'TM005', 400, 'discount on the other items exceeds your limit (the approval covers only its own item); ask for another approval')
         basis = 'manager_approval'; authorizer = approval.approved_by
       } else return fail(json, 'TM005', 400, 'discount exceeds your limit (0 % per line); ask an approver for a discount approval')
     } else if (payload.p_discount_approval_id) return fail(json, 'TM003', 400, 'a discount approval was supplied but the sale has no discount')

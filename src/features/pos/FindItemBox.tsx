@@ -5,7 +5,8 @@ import { findItems, type FoundItem } from './findItems'
 import type { CartLine } from './logic'
 
 /** Type a model, colour, storage or the last digits of an IMEI and pick the item: for counters without a scanner. */
-export function FindItemBox({ devices, accessories, cart, loading, failed, onPick }: {
+export function FindItemBox({ devices, accessories, cart, loading, failed, onPick, label = 'Find an item to sell' }: {
+  label?: string
   devices: SellableDevice[]
   accessories: SellableAccessory[]
   cart: CartLine[]
@@ -25,7 +26,7 @@ export function FindItemBox({ devices, accessories, cart, loading, failed, onPic
 
   return (
     <div className="find-item">
-      <label htmlFor={id}>Find an item to sell</label>
+      <label htmlFor={id}>{label}</label>
       <input
         id={id}
         type="search"

@@ -13,7 +13,7 @@ import { CustomerPicker } from './CustomerPicker'
 import { FindItemBox } from './FindItemBox'
 import type { FoundItem } from './findItems'
 import {
-  accessoryToLine, approvalAuthority, cartTotals, deviceToLine, lineAmounts, ownAuthority, PAYMENT_LABEL, PAYMENT_METHODS, sanitizeIdentifier,
+  accessoryToLine, approvalAuthority, approvalItemLabel, cartTotals, deviceToLine, lineAmounts, ownAuthority, PAYMENT_LABEL, PAYMENT_METHODS, sanitizeIdentifier,
   validateSale, type CartLine, type SaleErrors,
 } from './logic'
 
@@ -136,7 +136,7 @@ export function PosPage() {
   }
 
   const shown = showErrors ? { ...check.errors, ...errors } : {}
-  const usable = (approvals.data ?? []).filter((a) => approvalAuthority(lines, a, null).allowed || a.id === approvalId)
+  const usable = (approvals.data ?? []).filter((a) => approvalAuthority(lines, a, null, policy).allowed || a.id === approvalId)
 
   if (policies.isPending) return <Loading />
   if (policies.isError) return <ErrorBox error={policies.error} retry={() => void policies.refetch()} />
@@ -268,13 +268,13 @@ export function PosPage() {
                   {(p) => <input {...p} value={reason} onChange={(e) => setReason(e.target.value)} />}
                 </Field>
                 {(needsApproval || approvalId) && (
-                  <Field label="Discount approval" error={shown.discount} hint={approvals.data?.length === 0 ? 'You have no unused approval. Ask an Admin to grant one.' : undefined}>
+                  <Field label="Discount approval" error={shown.discount} hint={approvals.data?.length === 0 ? 'You have no unused approval. Ask an Admin to grant one for this item.' : 'An approval works only for the item it was granted for.'}>
                     {(p) => (
                       <select {...p} value={approvalId} onChange={(e) => setApprovalId(e.target.value)}>
                         <option value="">No approval</option>
                         {usable.map((a) => (
                           <option key={a.id} value={a.id}>
-                            Up to {formatINR(a.max_amount)} · {a.reason} · expires {new Date(a.expires_at).toLocaleTimeString()}
+                            {approvalItemLabel(a)}: up to {formatINR(a.max_amount)} · {a.reason} · expires {new Date(a.expires_at).toLocaleTimeString()}
                           </option>
                         ))}
                       </select>

@@ -151,18 +151,44 @@ function withinLimits(lines: CartLine[], totalDiscount: number, p: PolicyLimits)
 export const ownAuthority = (lines: CartLine[], policy: PolicyLimits | null): Authority =>
   withinLimits(lines, cartTotals(lines).discountPaise, policy ?? { can_discount: false, max_percent: 0, max_amount: null })
 
-/** Can this approval cover the cart's discount? `approverPolicy` is the approving Admin's policy when known. */
-export function approvalAuthority(lines: CartLine[], approval: DiscountApproval, approverPolicy: (PolicyLimits & { can_approve: boolean }) | null, now = new Date()): Authority {
-  const total = cartTotals(lines).discountPaise
+/** Is this cart line the item the approval was granted for? */
+export const isApprovalItem = (l: CartLine, a: Pick<DiscountApproval, 'inventory_item_id' | 'variant_id'>): boolean =>
+  (a.inventory_item_id !== null && l.kind === 'device' && l.itemId === a.inventory_item_id) ||
+  (a.variant_id !== null && l.kind === 'accessory' && l.variantId === a.variant_id)
+
+/**
+ * Can this approval cover the cart's discount? An approval is for ONE phone or accessory product: it covers the discount on that
+ * item only (up to its amount). A discount on any other item must fit the seller's own allowance (`own`).
+ * `approverPolicy` is the approving Admin's policy when known.
+ */
+export function approvalAuthority(lines: CartLine[], approval: DiscountApproval, approverPolicy: (PolicyLimits & { can_approve: boolean }) | null, own: PolicyLimits | null = null, now = new Date()): Authority {
   if (approval.used_at) return { allowed: false, why: 'That approval was already used.' }
   if (new Date(approval.expires_at) <= now) return { allowed: false, why: 'That approval has expired.' }
-  if (total > toPaise(approval.max_amount)) return { allowed: false, why: `The discount is above the approved ₹${approval.max_amount}.` }
+  if (!approval.inventory_item_id && !approval.variant_id) return { allowed: false, why: 'That approval is not tied to an item. Ask an Admin for a new one.' }
+  const bound = lines.filter((l) => isApprovalItem(l, approval))
+  const rest = lines.filter((l) => !isApprovalItem(l, approval))
+  if (bound.length === 0) return { allowed: false, why: 'That approval is for a different item than the ones in this sale.' }
+  const boundDiscount = cartTotals(bound).discountPaise
+  if (boundDiscount === 0) return { allowed: false, why: 'The item this approval is for has no discount in this sale.' }
+  if (boundDiscount > toPaise(approval.max_amount)) return { allowed: false, why: `The discount on that item is above the approved ₹${approval.max_amount}.` }
   if (approverPolicy) {
     if (!approverPolicy.can_approve) return { allowed: false, why: 'The approver is no longer allowed to approve discounts.' }
-    const r = withinLimits(lines, total, approverPolicy)
+    const r = withinLimits(bound, boundDiscount, approverPolicy)
     if (!r.allowed) return { allowed: false, why: `The approver's own limits do not cover this discount. ${r.why}` }
   }
+  const otherDiscount = cartTotals(rest).discountPaise
+  if (otherDiscount > 0) {
+    const r = withinLimits(rest, otherDiscount, own ?? { can_discount: false, max_percent: 0, max_amount: null })
+    if (!r.allowed) return { allowed: false, why: `The approval covers only its own item. ${r.why}` }
+  }
   return { allowed: true, why: null }
+}
+
+/** What an approval is for, in words (shown to the Admin and the seller). */
+export function approvalItemLabel(a: DiscountApproval): string {
+  if (a.item?.variant) return `${title(a.item.variant)} · IMEI ending ${(a.item.imei1 ?? a.item.serial_number ?? '').slice(-4)}`
+  if (a.variant) return `${title(a.variant)} (accessory)`
+  return a.inventory_item_id || a.variant_id ? 'An item' : 'No item (old approval, cannot be used)'
 }
 
 // ---- whole-sale validation and payload
@@ -203,7 +229,7 @@ export function validateSale(f: SaleForm): { errors: SaleErrors; lineErrors: Rec
     if (f.discountReason.trim().length < 3) errors.reason = 'A discount needs a reason (at least 3 characters).'
     const own = ownAuthority(f.lines, f.policy)
     if (f.approval) {
-      const a = approvalAuthority(f.lines, f.approval, f.approverPolicy)
+      const a = approvalAuthority(f.lines, f.approval, f.approverPolicy, f.policy)
       if (!a.allowed) errors.discount = a.why ?? 'The approval does not cover this discount.'
     } else if (!own.allowed) {
       errors.discount = `${own.why} Ask an Admin for a discount approval, or reduce the discount.`

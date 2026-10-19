@@ -9,6 +9,7 @@ import { PAGE_SIZE } from './inventory'
 
 const VARIANT_EMBED = 'variant:product_variants(id, sku, color, ram_gb, storage_gb, mrp, selling_price, is_active, product:products(name, brand:brands(name)))'
 const DEVICE_COLUMNS = `id, variant_id, imei1, imei2, serial_number, status, ${VARIANT_EMBED}`
+const APPROVAL_COLUMNS = 'id, requested_for, approved_by, max_amount, reason, expires_at, used_at, used_in_sale_id, created_at, inventory_item_id, variant_id, item:inventory_items(imei1, serial_number, variant:product_variants(id, sku, color, ram_gb, storage_gb, mrp, selling_price, is_active, product:products(name, brand:brands(name)))), variant:product_variants(id, sku, color, ram_gb, storage_gb, mrp, selling_price, is_active, product:products(name, brand:brands(name)))'
 const CUSTOMER_COLUMNS = 'id, name, phone, email, address, notes'
 
 /**
@@ -69,11 +70,11 @@ export const listUsableApprovals = (userId: string) =>
   run<DiscountApproval[]>(
     supabase
       .from('discount_approvals')
-      .select('id, requested_for, approved_by, max_amount, reason, expires_at, used_at, used_in_sale_id, created_at')
+      .select(APPROVAL_COLUMNS)
       .eq('requested_for', userId)
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString())
-      .order('expires_at'),
+      .order('expires_at') as never,
   )
 
 export type SaleLineInput =
@@ -135,9 +136,9 @@ export const listApprovals = () =>
   run<DiscountApproval[]>(
     supabase
       .from('discount_approvals')
-      .select('id, requested_for, approved_by, max_amount, reason, expires_at, used_at, used_in_sale_id, created_at')
+      .select(APPROVAL_COLUMNS)
       .order('created_at', { ascending: false })
-      .limit(50),
+      .limit(50) as never,
   )
 
 export interface GrantApprovalInput {
@@ -145,6 +146,9 @@ export interface GrantApprovalInput {
   maxAmount: number
   reason: string
   validMinutes: number
+  /** Exactly one: the phone, or the accessory product, the approval is for. */
+  inventoryItemId?: string
+  variantId?: string
 }
 export const grantDiscountApproval = (input: GrantApprovalInput, key: string) =>
   run<{ approval_id: string; expires_at: string; replayed: boolean }>(
@@ -154,5 +158,7 @@ export const grantDiscountApproval = (input: GrantApprovalInput, key: string) =>
       p_max_amount: input.maxAmount,
       p_reason: input.reason,
       p_valid_minutes: input.validMinutes,
+      p_inventory_item_id: input.inventoryItemId ?? null,
+      p_variant_id: input.variantId ?? null,
     }) as never,
   )

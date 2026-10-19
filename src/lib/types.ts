@@ -290,6 +290,12 @@ export interface DiscountApproval {
   used_at: string | null
   used_in_sale_id: string | null
   created_at: string
+  /** The one phone or accessory product this approval is for (migration 0025). Exactly one of the two is set. */
+  inventory_item_id: string | null
+  variant_id: string | null
+  /** Display only (embedded by the API): what the approval is for. */
+  item?: { imei1: string | null; serial_number: string | null; variant: SellableVariant | null } | null
+  variant?: SellableVariant | null
 }
 
 export interface FinalizeSaleResult {

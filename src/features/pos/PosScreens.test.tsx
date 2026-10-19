@@ -22,7 +22,7 @@ const variant = { id: 'v1', sku: 'NOVA-X1', color: 'Black', ram_gb: 8, storage_g
 const device = (over: Partial<SellableDevice> = {}): SellableDevice => ({ id: 'd1', variant_id: 'v1', imei1: IMEI, imei2: null, serial_number: null, status: 'in_stock', variant, ...over })
 const acc: SellableAccessory = { id: 'a1', sku: 'CASE', color: 'Black', mrp: 500, selling_price: 400, is_active: true, product: { name: 'Case', brand: { name: 'Nova' } }, on_hand: 20 }
 const policy = (role: 'admin' | 'manager', over: Partial<DiscountPolicy> = {}): DiscountPolicy => ({ role, can_discount: role === 'admin', max_percent: role === 'admin' ? 100 : 0, max_amount: null, can_approve: role === 'admin', configured_at: null, ...over })
-const approval: DiscountApproval = { id: 'ap1', requested_for: '11111111-1111-1111-1111-111111111111', approved_by: 'admin-id', max_amount: 1500, reason: 'Festival offer', expires_at: new Date(Date.now() + 600_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: '' }
+const approval: DiscountApproval = { id: 'ap1', requested_for: '11111111-1111-1111-1111-111111111111', approved_by: 'admin-id', max_amount: 1500, reason: 'Festival offer', expires_at: new Date(Date.now() + 600_000).toISOString(), used_at: null, used_in_sale_id: null, created_at: '', inventory_item_id: 'd1', variant_id: null }
 const invoice: Invoice = {
   id: 'i1', sale_id: 's1', invoice_number: 'TM/26-27/000001', issued_at: '2026-10-18T10:00:00Z', shop_name: 'Tirumala Mobiles', shop_address: 'Main Road', customer_name: 'Ravi Kumar', customer_phone: '9876543210', customer_address: null,
   subtotal: 19800, discount_total: 0, grand_total: 19800,
@@ -399,17 +399,23 @@ describe('ApprovalsPage and navigation', () => {
       { user_id: 'u-mgr', full_name: 'Mohan Manager', role: 'manager', phone: null, is_active: true, created_at: '' },
     ])
     vi.mocked(sales.grantDiscountApproval).mockResolvedValue({ approval_id: 'ap1', expires_at: new Date(Date.now() + 900_000).toISOString(), replayed: false })
+    vi.mocked(sales.listSellableDevices).mockResolvedValue([device()])
+    vi.mocked(sales.listSellableAccessories).mockResolvedValue([acc])
     const user = userEvent.setup()
     renderApp(<Routes><Route path="/approvals" element={<ApprovalsPage />} /></Routes>, { state: readyState('admin'), route: '/approvals' })
     await user.click(await screen.findByRole('button', { name: 'Grant approval' }))
     expect(await screen.findByText('Choose who the approval is for.')).toBeInTheDocument()
+    expect(await screen.findByText('Choose the phone or accessory this approval is for.')).toBeInTheDocument()
     expect(sales.grantDiscountApproval).not.toHaveBeenCalled()
+    await user.type(screen.getByLabelText(/Find the phone or accessory/), 'nova x1')
+    await user.click(await screen.findByRole('button', { name: /IMEI ending 7518/ }))
+    expect(screen.getByText(/Nova X1 Black 8GB RAM 128GB · IMEI ending 7518/)).toBeInTheDocument()
     await user.selectOptions(await screen.findByLabelText('For'), 'u-mgr')
-    await user.type(screen.getByLabelText('Largest total discount (₹)'), '1500')
+    await user.type(screen.getByLabelText('Largest discount on this item (₹)'), '1500')
     await user.type(screen.getByLabelText('Reason'), 'Festival offer')
     await user.click(screen.getByRole('button', { name: 'Grant approval' }))
     expect(await screen.findByText(/Confirmed by the server: approval granted/)).toBeInTheDocument()
-    expect(sales.grantDiscountApproval).toHaveBeenCalledWith({ requestedFor: 'u-mgr', maxAmount: 1500, reason: 'Festival offer', validMinutes: 15 }, expect.any(String))
+    expect(sales.grantDiscountApproval).toHaveBeenCalledWith({ requestedFor: 'u-mgr', maxAmount: 1500, reason: 'Festival offer', validMinutes: 15, inventoryItemId: 'd1' }, expect.any(String))
   })
   it('a Manager cannot open the approvals page, and the POS links are visible to both roles', async () => {
     renderApp(<AppRoutes />, { state: readyState('manager'), route: '/approvals' })

@@ -128,8 +128,13 @@ describe('sales and invoices (read only)', () => {
 describe('Admin approvals', () => {
   it('grants through grant_discount_approval with documented arguments', async () => {
     result = { data: { approval_id: 'a' }, error: null }
-    await grantDiscountApproval({ requestedFor: 'u1', maxAmount: 1500, reason: 'Festival', validMinutes: 15 }, 'key-12345678')
-    expect(only('rpc')).toEqual(['grant_discount_approval', { p_idempotency_key: 'key-12345678', p_requested_for: 'u1', p_max_amount: 1500, p_reason: 'Festival', p_valid_minutes: 15 }])
+    await grantDiscountApproval({ requestedFor: 'u1', maxAmount: 1500, reason: 'Festival', validMinutes: 15, inventoryItemId: 'item-1' }, 'key-12345678')
+    expect(only('rpc')).toEqual(['grant_discount_approval', { p_idempotency_key: 'key-12345678', p_requested_for: 'u1', p_max_amount: 1500, p_reason: 'Festival', p_valid_minutes: 15, p_inventory_item_id: 'item-1', p_variant_id: null }])
+  })
+  it('an accessory approval sends the product, not an item', async () => {
+    result = { data: { approval_id: 'a' }, error: null }
+    await grantDiscountApproval({ requestedFor: 'u1', maxAmount: 400, reason: 'Two cases', validMinutes: 15, variantId: 'var-1' }, 'key-12345678')
+    expect(only('rpc')).toEqual(['grant_discount_approval', { p_idempotency_key: 'key-12345678', p_requested_for: 'u1', p_max_amount: 400, p_reason: 'Two cases', p_valid_minutes: 15, p_inventory_item_id: null, p_variant_id: 'var-1' }])
   })
   it('a Manager is refused in plain words', async () => {
     result = { data: null, error: { code: '42501', message: 'only an Admin whose policy allows approvals may approve discounts' } }
