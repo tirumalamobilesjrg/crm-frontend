@@ -180,7 +180,7 @@ export function ProductDetailPage() {
                 <th className="right">Selling</th>
                 <th className="right">Website price</th>
                 <th>Status</th>
-                <th />
+                <th><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>

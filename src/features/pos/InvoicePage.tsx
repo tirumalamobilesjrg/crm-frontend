@@ -71,6 +71,7 @@ export function InvoicePage() {
           {inv.customer_address && <p>{inv.customer_address}</p>}
         </section>
 
+        <div className="table-scroll" tabIndex={0} role="region" aria-label="Invoice lines">
         <table className="table invoice-lines" aria-label="Invoice lines">
           <thead>
             <tr>
@@ -101,6 +102,7 @@ export function InvoicePage() {
             ))}
           </tbody>
         </table>
+        </div>
 
         <dl className="totals invoice-totals">
           <div><dt>Subtotal</dt><dd>{formatINR(inv.subtotal)}</dd></div>

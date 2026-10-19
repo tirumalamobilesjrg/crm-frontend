@@ -63,7 +63,7 @@ function Section(props: {
             <tr>
               <th>Name</th>
               <th>Status</th>
-              <th />
+              <th><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>

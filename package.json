@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node e2e/run.mjs",
+    "a11y": "node e2e/run.mjs --script e2e/a11y.mjs",
     "screenshots": "node e2e/run.mjs --script e2e/screenshots.mjs"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
+    "axe-core": "4.10.3",
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.13.0",
