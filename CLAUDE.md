@@ -67,3 +67,6 @@ Brands & categories: each brand shows a logo tile (or its first letter), the Pro
 
 ## Item-bound approvals (branch feature/item-bound-approvals-ui; needs backend migration 0025)
 The Admin picks the phone or accessory (type-to-find) when granting; an approval covers the discount on THAT item only (`approvalAuthority`, `isApprovalItem` in `pos/logic.ts` mirror finalize_sale). The POS lists only approvals whose item is in the cart and shows what each is for (`approvalItemLabel`). Do not release this branch to production before migration 0025 is applied to the hosted database (the new grant_discount_approval arguments do not exist there until then).
+
+## Accessibility audit
+`npm run a11y` (e2e/a11y.mjs, axe-core 4.10.3) visits every screen as manager and admin at 375 and 1280 px, light and dark, plus the phone drawer and Settings tabs, against the stand-in server; exits 1 on serious/critical violations. Last run: 0 violations. Automated checks are not a screen-reader or real-phone pass. Icon-only table columns use `<th><span className="sr-only">Actions</span></th>`; invoice lines sit in a focusable `.table-scroll` region.

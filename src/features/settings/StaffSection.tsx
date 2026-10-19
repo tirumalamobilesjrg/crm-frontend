@@ -99,7 +99,7 @@ export function StaffSection() {
               <th>Name</th>
               <th>Role</th>
               <th>Status</th>
-              <th />
+              <th><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>

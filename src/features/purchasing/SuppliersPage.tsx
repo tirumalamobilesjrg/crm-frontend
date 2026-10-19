@@ -90,7 +90,7 @@ export function SuppliersPage() {
               <th>Phone</th>
               <th>Email</th>
               <th>Status</th>
-              <th />
+              <th><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>

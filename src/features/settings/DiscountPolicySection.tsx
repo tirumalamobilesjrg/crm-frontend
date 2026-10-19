@@ -40,7 +40,7 @@ function PolicyRow({ policy }: { policy: DiscountPolicy }) {
   return (
     <section className="panel" aria-label={`${label} discount policy`}>
       <div className="page-head">
-        <h3>{label}</h3>
+        <h2>{label}</h2>
         {policy.configured_at === null ? <Badge tone="warn">Never reviewed — default values</Badge> : <Badge tone="good">Configured</Badge>}
       </div>
       <label className="check">

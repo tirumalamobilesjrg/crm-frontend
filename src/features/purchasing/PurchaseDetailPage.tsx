@@ -243,7 +243,7 @@ export function PurchaseDetailPage() {
               <th className="right">Qty</th>
               <th className="right">Unit cost</th>
               <th className="right">Line total</th>
-              {isDraft && <th />}
+              {isDraft && <th><span className="sr-only">Actions</span></th>}
             </tr>
           </thead>
           <tbody>
@@ -277,7 +277,7 @@ export function PurchaseDetailPage() {
                 Total
               </th>
               <th className="right">{formatINR(p.total)}</th>
-              {isDraft && <th />}
+              {isDraft && <th><span className="sr-only">Actions</span></th>}
             </tr>
           </tfoot>
         </table>
