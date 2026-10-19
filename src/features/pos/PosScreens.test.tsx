@@ -233,8 +233,9 @@ describe('POS: payment and completing the sale', () => {
     // the toast and the banner on the invoice page both announce it
     const announcements = await screen.findAllByText(/Sale completed\. Invoice/)
     expect(announcements[0]).toHaveTextContent('TM/26-27/000001')
-    expect(screen.getByRole('heading', { name: 'Invoice TM/26-27/000001' })).toBeInTheDocument()
-  })
+    // the toast appears before the invoice page has finished loading its data, so wait for the heading
+    expect(await screen.findByRole('heading', { name: 'Invoice TM/26-27/000001' }, { timeout: 5000 })).toBeInTheDocument()
+  }, 15_000)
 
   it('a rejected sale shows the server reason, claims nothing, and keeps the cart', async () => {
     vi.mocked(sales.finalizeSale).mockRejectedValue(new AppError('That item is not available (already sold, or not enough stock).', 'TM004'))
